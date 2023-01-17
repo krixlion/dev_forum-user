@@ -7,17 +7,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krixlion/dev-forum_article/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/logging"
 )
 
 // DB is a wrapper for the read model and write model to use with Storage interface.
 type DB struct {
 	cmd    Eventstore
-	query  ReadStorage
+	query  Storage
 	logger logging.Logger
 }
 
-func NewStorage(cmd Eventstore, query ReadStorage, logger logging.Logger) Storage {
+func NewCQRStorage(cmd Eventstore, query Storage, logger logging.Logger) CQRStorage {
 	return &DB{
 		cmd:    cmd,
 		query:  query,
@@ -43,19 +45,19 @@ func (storage DB) Close() error {
 	return nil
 }
 
-func (storage DB) Get(ctx context.Context, id string) (entity.Entity, error) {
+func (storage DB) Get(ctx context.Context, id string) (entity.User, error) {
 	return storage.query.Get(ctx, id)
 }
 
-func (storage DB) GetMultiple(ctx context.Context, offset, limit string) ([]entity.Entity, error) {
+func (storage DB) GetMultiple(ctx context.Context, offset, limit string) ([]entity.User, error) {
 	return storage.query.GetMultiple(ctx, offset, limit)
 }
 
-func (storage DB) Update(ctx context.Context, article entity.Entity) error {
+func (storage DB) Update(ctx context.Context, article entity.User) error {
 	return storage.cmd.Update(ctx, article)
 }
 
-func (storage DB) Create(ctx context.Context, article entity.Entity) error {
+func (storage DB) Create(ctx context.Context, article entity.User) error {
 	return storage.cmd.Create(ctx, article)
 }
 
@@ -73,7 +75,7 @@ func (db DB) CatchUp(e event.Event) {
 
 	switch e.Type {
 	case event.ArticleCreated:
-		var article entity.Entity
+		var article entity.User
 		if err := json.Unmarshal(e.Body, &article); err != nil {
 			// // tracing.SetSpanErr(span, err)
 			db.logger.Log(ctx, "Failed to parse event",
@@ -112,7 +114,7 @@ func (db DB) CatchUp(e event.Event) {
 		return
 
 	case event.ArticleUpdated:
-		var article entity.Entity
+		var article entity.User
 		if err := json.Unmarshal(e.Body, &article); err != nil {
 			// // tracing.SetSpanErr(span, err)
 			db.logger.Log(ctx, "Failed to parse event",

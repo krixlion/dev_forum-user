@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/krixlion/dev-forum_article/pkg/logging"
+	"github.com/krixlion/dev_forum-user/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const ServiceName = "service"
+const ServiceName = "user-service"
 
 func InitProvider() (func(), error) {
 	ctx := context.Background()

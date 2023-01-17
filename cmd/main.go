@@ -6,6 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/krixlion/dev_forum-user/cmd/service"
+	"github.com/krixlion/dev_forum-user/pkg/env"
+	"github.com/krixlion/dev_forum-user/pkg/logging"
+	"github.com/krixlion/dev_forum-user/pkg/tracing"
 )
 
 var port int
@@ -27,7 +32,7 @@ func main() {
 		logging.Log("Failed to initialize tracing", "err", err)
 	}
 
-	service := service.NewEntityService(port, getServiceDependencies())
+	service := service.NewUserService(port, getServiceDependencies())
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	service.Run(ctx)
 

@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/krixlion/dev-forum_article/pkg/event"
-	"github.com/krixlion/dev-forum_article/pkg/helpers/gentest"
-	rabbitmq "github.com/krixlion/dev-forum_rabbitmq"
+	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
+	"github.com/krixlion/dev_forum-user/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 )
 
 func Test_messageFromEvent(t *testing.T) {
 
-	jsonArticle := gentest.RandomJSONArticle(3, 5)
+	jsonArticle := gentest.RandomJSONUser(3, 5, 5)
 	e := event.Event{
 		AggregateId: "article",
 		Type:        event.ArticleCreated,

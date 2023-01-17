@@ -6,35 +6,39 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/Krixlion/def-forum_proto/article_service/pb"
+	"github.com/krixlion/dev_forum-proto/user_service/pb"
+	"github.com/krixlion/dev_forum-user/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/logging"
+	"github.com/krixlion/dev_forum-user/pkg/net/grpc/server"
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type ArticleService struct {
+type UserService struct {
 	grpcPort int
 	grpcSrv  *grpc.Server
-	srv      server.EntityServer
+	srv      server.UserServer
 
-	// Consumer for events used to update and sync the read model.
-	syncEventSource event.Consumer
-	broker          event.Broker
-	dispatcher      event.Dispatcher
+	broker     event.Broker
+	dispatcher *event.Dispatcher
 
 	logger logging.Logger
 }
 
 type Dependencies struct {
+	Storage storage.Storage
+	Logger  logging.Logger
+	Broker  event.Broker
 }
 
-func NewArticleService(grpcPort int, d Dependencies) *ArticleService {
-	dispatcher := event.MakeDispatcher()
-	dispatcher.Subscribe(event.HandlerFunc(storage.CatchUp), event.ArticleCreated, event.ArticleDeleted, event.ArticleUpdated)
+func NewUserService(grpcPort int, d Dependencies) UserService {
+	dispatcher := event.MakeDispatcher(20)
 
-	srv := server.EntityServer{
-		Storage: storage,
-		Logger:  logger,
+	srv := server.UserServer{
+		Storage: d.Storage,
+		Logger:  d.Logger,
 	}
 
 	baseSrv := grpc.NewServer(
@@ -43,24 +47,23 @@ func NewArticleService(grpcPort int, d Dependencies) *ArticleService {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 
-	s := EntityService{
+	s := UserService{
 		grpcPort: grpcPort,
 		grpcSrv:  baseSrv,
 
 		srv: srv,
 
-		dispatcher:      dispatcher,
-		broker:          broker,
-		syncEventSource: &cmd,
+		dispatcher: &dispatcher,
+		broker:     d.Broker,
 
-		logger: logger,
+		logger: d.Logger,
 	}
 	reflection.Register(s.grpcSrv)
-	pb.RegisterArticleServiceServer(s.grpcSrv, s.srv)
+	pb.RegisterUserServiceServer(s.grpcSrv, s.srv)
 	return s
 }
 
-func (s *ArticleService) Run(ctx context.Context) {
+func (s *UserService) Run(ctx context.Context) {
 	if err := ctx.Err(); err != nil {
 		return
 	}
@@ -71,7 +74,7 @@ func (s *ArticleService) Run(ctx context.Context) {
 	}
 
 	go func() {
-		s.dispatcher.AddEventSources(s.SyncEventSources(ctx)...)
+		// s.dispatcher.AddEventSources(s.SyncEventSources(ctx)...)
 		s.dispatcher.Run(ctx)
 	}()
 
@@ -82,27 +85,27 @@ func (s *ArticleService) Run(ctx context.Context) {
 	}
 }
 
-func (s *ArticleService) Close() error {
+func (s *UserService) Close() error {
 	s.grpcSrv.GracefulStop()
 	return s.srv.Close()
 }
 
-func (s *ArticleService) SyncEventSources(ctx context.Context) (chans []<-chan event.Event) {
+// func (s *UserService) SyncEventSources(ctx context.Context) (chans []<-chan event.Event) {
 
-	aCreated, err := s.syncEventSource.Consume(ctx, "", event.ArticleCreated)
-	if err != nil {
-		panic(err)
-	}
+// 	aCreated, err := s.syncEventSource.Consume(ctx, "", event.ArticleCreated)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	aDeleted, err := s.syncEventSource.Consume(ctx, "", event.ArticleDeleted)
-	if err != nil {
-		panic(err)
-	}
+// 	aDeleted, err := s.syncEventSource.Consume(ctx, "", event.ArticleDeleted)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	aUpdated, err := s.syncEventSource.Consume(ctx, "", event.ArticleUpdated)
-	if err != nil {
-		panic(err)
-	}
+// 	aUpdated, err := s.syncEventSource.Consume(ctx, "", event.ArticleUpdated)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	return append(chans, aCreated, aDeleted, aUpdated)
-}
+// 	return append(chans, aCreated, aDeleted, aUpdated)
+// }

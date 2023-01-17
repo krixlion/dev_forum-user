@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/event"
 )
 
 type CQRStorage interface {
@@ -19,14 +21,14 @@ type Storage interface {
 
 type Getter interface {
 	io.Closer
-	Get(ctx context.Context, id string) (entity.Entity, error)
-	GetMultiple(ctx context.Context, offset, limit string) ([]entity.Entity, error)
+	Get(ctx context.Context, id string) (entity.User, error)
+	GetMultiple(ctx context.Context, offset, limit string) ([]entity.User, error)
 }
 
 type Writer interface {
 	io.Closer
-	Create(context.Context, entity.Entity) error
-	Update(context.Context, entity.Entity) error
+	Create(context.Context, entity.User) error
+	Update(context.Context, entity.User) error
 	Delete(ctx context.Context, id string) error
 }
 

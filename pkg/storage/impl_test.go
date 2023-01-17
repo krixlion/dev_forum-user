@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/krixlion/dev-forum_article/pkg/entity"
-	"github.com/krixlion/dev-forum_article/pkg/event"
-	"github.com/krixlion/dev-forum_article/pkg/helpers/gentest"
-	"github.com/krixlion/dev-forum_article/pkg/helpers/nulls"
-	"github.com/krixlion/dev-forum_article/pkg/storage"
+	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
+	"github.com/krixlion/dev_forum-user/pkg/helpers/nulls"
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,7 +27,7 @@ func Test_Get(t *testing.T) {
 		desc    string
 		query   mockQuery
 		args    args
-		want    entity.Article
+		want    entity.User
 		wantErr bool
 	}{
 		{
@@ -36,10 +36,10 @@ func Test_Get(t *testing.T) {
 				ctx: context.Background(),
 				id:  "",
 			},
-			want: entity.Article{},
+			want: entity.User{},
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.Article{}, nil).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, nil).Once()
 				return m
 			}(),
 		},
@@ -49,18 +49,18 @@ func Test_Get(t *testing.T) {
 				ctx: context.Background(),
 				id:  "",
 			},
-			want:    entity.Article{},
+			want:    entity.User{},
 			wantErr: true,
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.Article{}, errors.New("test err")).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(mockCmd{}, tC.query, nulls.NullLogger{})
+			db := storage.NewCQRStorage(mockCmd{}, tC.query, nulls.NullLogger{})
 			got, err := db.Get(tC.args.ctx, tC.args.id)
 			if (err != nil) != tC.wantErr {
 				t.Errorf("storage.Get():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
@@ -86,7 +86,7 @@ func Test_GetMultiple(t *testing.T) {
 		desc    string
 		query   mockQuery
 		args    args
-		want    []entity.Article
+		want    []entity.User
 		wantErr bool
 	}{
 		{
@@ -96,10 +96,10 @@ func Test_GetMultiple(t *testing.T) {
 				limit:  "",
 				offset: "",
 			},
-			want: []entity.Article{},
+			want: []entity.User{},
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.Article{}, nil).Once()
+				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, nil).Once()
 				return m
 			}(),
 		},
@@ -110,18 +110,18 @@ func Test_GetMultiple(t *testing.T) {
 				limit:  "",
 				offset: "",
 			},
-			want:    []entity.Article{},
+			want:    []entity.User{},
 			wantErr: true,
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.Article{}, errors.New("test err")).Once()
+				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(mockCmd{}, tC.query, nulls.NullLogger{})
+			db := storage.NewCQRStorage(mockCmd{}, tC.query, nulls.NullLogger{})
 			got, err := db.GetMultiple(tC.args.ctx, tC.args.offset, tC.args.limit)
 			if (err != nil) != tC.wantErr {
 				t.Errorf("storage.GetMultiple():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
@@ -140,7 +140,7 @@ func Test_GetMultiple(t *testing.T) {
 func Test_Create(t *testing.T) {
 	type args struct {
 		ctx     context.Context
-		article entity.Article
+		article entity.User
 	}
 
 	testCases := []struct {
@@ -153,12 +153,12 @@ func Test_Create(t *testing.T) {
 			desc: "Test if method is invoked",
 			args: args{
 				ctx:     context.Background(),
-				article: entity.Article{},
+				article: entity.User{},
 			},
 
 			cmd: func() mockCmd {
 				m := mockCmd{new(mock.Mock)}
-				m.On("Create", mock.Anything, mock.AnythingOfType("entity.Article")).Return(nil).Once()
+				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 		},
@@ -166,19 +166,19 @@ func Test_Create(t *testing.T) {
 			desc: "Test if an error is forwarded",
 			args: args{
 				ctx:     context.Background(),
-				article: entity.Article{},
+				article: entity.User{},
 			},
 			wantErr: true,
 			cmd: func() mockCmd {
 				m := mockCmd{new(mock.Mock)}
-				m.On("Create", mock.Anything, mock.AnythingOfType("entity.Article")).Return(errors.New("test err")).Once()
+				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
+			db := storage.NewCQRStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
 			err := db.Create(tC.args.ctx, tC.args.article)
 			if (err != nil) != tC.wantErr {
 				t.Errorf("storage.Create():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
@@ -191,7 +191,7 @@ func Test_Create(t *testing.T) {
 func Test_Update(t *testing.T) {
 	type args struct {
 		ctx     context.Context
-		article entity.Article
+		article entity.User
 	}
 
 	testCases := []struct {
@@ -204,12 +204,12 @@ func Test_Update(t *testing.T) {
 			desc: "Test if method is invoked",
 			args: args{
 				ctx:     context.Background(),
-				article: entity.Article{},
+				article: entity.User{},
 			},
 
 			cmd: func() mockCmd {
 				m := mockCmd{new(mock.Mock)}
-				m.On("Update", mock.Anything, mock.AnythingOfType("entity.Article")).Return(nil).Once()
+				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 		},
@@ -217,19 +217,19 @@ func Test_Update(t *testing.T) {
 			desc: "Test if error is forwarded",
 			args: args{
 				ctx:     context.Background(),
-				article: entity.Article{},
+				article: entity.User{},
 			},
 			wantErr: true,
 			cmd: func() mockCmd {
 				m := mockCmd{new(mock.Mock)}
-				m.On("Update", mock.Anything, mock.AnythingOfType("entity.Article")).Return(errors.New("test err")).Once()
+				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
+			db := storage.NewCQRStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
 			err := db.Update(tC.args.ctx, tC.args.article)
 			if (err != nil) != tC.wantErr {
 				t.Errorf("storage.Update():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
@@ -280,7 +280,7 @@ func Test_Delete(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
+			db := storage.NewCQRStorage(tC.cmd, mockQuery{}, nulls.NullLogger{})
 			err := db.Delete(tC.args.ctx, tC.args.id)
 			if (err != nil) != tC.wantErr {
 				t.Errorf("storage.Delete():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
@@ -303,12 +303,12 @@ func Test_CatchUp(t *testing.T) {
 			desc: "Test if Update method is invoked on ArticleUpdated event",
 			arg: event.Event{
 				Type: event.ArticleUpdated,
-				Body: gentest.RandomJSONArticle(2, 3),
+				Body: gentest.RandomJSONUser(2, 3, 3),
 			},
 			method: "Update",
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("Update", mock.Anything, mock.AnythingOfType("entity.Article")).Return(nil).Once()
+				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 		},
@@ -316,12 +316,12 @@ func Test_CatchUp(t *testing.T) {
 			desc: "Test if Create method is invoked on ArticleCreated event",
 			arg: event.Event{
 				Type: event.ArticleCreated,
-				Body: gentest.RandomJSONArticle(2, 3),
+				Body: gentest.RandomJSONUser(2, 3, 3),
 			},
 			method: "Create",
 			query: func() mockQuery {
 				m := mockQuery{new(mock.Mock)}
-				m.On("Create", mock.Anything, mock.AnythingOfType("entity.Article")).Return(nil).Once()
+				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 		},
@@ -347,7 +347,7 @@ func Test_CatchUp(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewStorage(mockCmd{}, tC.query, nulls.NullLogger{})
+			db := storage.NewCQRStorage(mockCmd{}, tC.query, nulls.NullLogger{})
 			db.CatchUp(tC.arg)
 
 			switch tC.method {
@@ -362,7 +362,7 @@ func Test_CatchUp(t *testing.T) {
 				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, id))
 
 			default:
-				var article entity.Article
+				var article entity.User
 				err := json.Unmarshal(tC.arg.Body, &article)
 				if err != nil {
 					t.Errorf("Failed to unmarshal random JSON article. Error: %+v", err)

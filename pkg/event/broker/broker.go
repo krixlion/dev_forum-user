@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/krixlion/dev-forum_article/pkg/event"
-	"github.com/krixlion/dev-forum_article/pkg/logging"
-	"github.com/krixlion/dev-forum_article/pkg/tracing"
-	rabbitmq "github.com/krixlion/dev-forum_rabbitmq"
+	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
+	"github.com/krixlion/dev_forum-user/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/logging"
+	"github.com/krixlion/dev_forum-user/pkg/tracing"
 	"go.opentelemetry.io/otel"
 )
 

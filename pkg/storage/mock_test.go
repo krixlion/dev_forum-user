@@ -3,8 +3,8 @@ package storage_test
 import (
 	"context"
 
-	"github.com/krixlion/dev-forum_article/pkg/entity"
-	"github.com/krixlion/dev-forum_article/pkg/event"
+	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/event"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -17,22 +17,22 @@ func (m mockQuery) Close() error {
 	return args.Error(0)
 }
 
-func (m mockQuery) Get(ctx context.Context, id string) (entity.Article, error) {
+func (m mockQuery) Get(ctx context.Context, id string) (entity.User, error) {
 	args := m.Called(ctx, id)
-	return args.Get(0).(entity.Article), args.Error(1)
+	return args.Get(0).(entity.User), args.Error(1)
 }
 
-func (m mockQuery) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.Article, error) {
+func (m mockQuery) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
 	args := m.Called(ctx, offset, limit)
-	return args.Get(0).([]entity.Article), args.Error(1)
+	return args.Get(0).([]entity.User), args.Error(1)
 }
 
-func (m mockQuery) Create(ctx context.Context, a entity.Article) error {
+func (m mockQuery) Create(ctx context.Context, a entity.User) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
 
-func (m mockQuery) Update(ctx context.Context, a entity.Article) error {
+func (m mockQuery) Update(ctx context.Context, a entity.User) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
@@ -56,12 +56,12 @@ func (m mockCmd) Consume(ctx context.Context, queue string, eventType event.Even
 	return args.Get(0).(<-chan event.Event), args.Error(1)
 }
 
-func (m mockCmd) Create(ctx context.Context, a entity.Article) error {
+func (m mockCmd) Create(ctx context.Context, a entity.User) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
 
-func (m mockCmd) Update(ctx context.Context, a entity.Article) error {
+func (m mockCmd) Update(ctx context.Context, a entity.User) error {
 	args := m.Called(ctx, a)
 	return args.Error(0)
 }
