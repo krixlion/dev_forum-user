@@ -3,6 +3,7 @@ package gentest
 import (
 	"encoding/json"
 	"math/rand"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
@@ -23,10 +24,12 @@ func RandomUser(nameLen, emailLen, passLen int) entity.User {
 	id := uuid.Must(uuid.NewV4())
 
 	return entity.User{
-		Id:       id.String(),
-		Name:     RandomString(nameLen),
-		Email:    RandomString(emailLen),
-		Password: RandomString(passLen),
+		Id:        id.String(),
+		Name:      RandomString(nameLen),
+		Email:     RandomString(emailLen),
+		Password:  RandomString(passLen),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 }
 

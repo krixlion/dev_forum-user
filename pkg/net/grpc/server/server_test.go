@@ -27,7 +27,7 @@ import (
 // server allowing only for local calls for testing.
 // Returns a client to interact with the server.
 // The server is shutdown when ctx.Done() receives.
-func setUpServer(ctx context.Context, mock storage.CQRStorage) pb.UserServiceClient {
+func setUpServer(ctx context.Context, mock storage.Storage) pb.UserServiceClient {
 	// bufconn allows the server to call itself
 	// great for testing across whole infrastructure
 	lis := bufconn.Listen(1024 * 1024)
@@ -62,11 +62,9 @@ func setUpServer(ctx context.Context, mock storage.CQRStorage) pb.UserServiceCli
 
 func Test_Get(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
-	User := &pb.User{
-		Id:       v.Id,
-		Password: v.Password,
-		Email:    v.Email,
-		Name:     v.Name,
+	user := &pb.User{
+		Id:   v.Id,
+		Name: v.Name,
 	}
 
 	testCases := []struct {
@@ -79,10 +77,10 @@ func Test_Get(t *testing.T) {
 		{
 			desc: "Test if response is returned properly on simple request",
 			arg: &pb.GetUserRequest{
-				Id: User.Id,
+				Id: user.Id,
 			},
 			want: &pb.GetUserResponse{
-				User: User,
+				User: user,
 			},
 			storage: func() (m mockStorage) {
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(v, nil).Times(1)

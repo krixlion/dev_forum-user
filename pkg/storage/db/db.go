@@ -1,18 +1,23 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/krixlion/goqu/v9"
 	_ "github.com/krixlion/goqu/v9/dialect/postgres"
-	"golang.org/x/crypto/bcrypt"
+	"go.nhat.io/otelsql"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
+const Driver = "postgres"
+
 func formatConnString(host, port, user, password, dbname string) string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
 }
 
 type DB struct {
@@ -20,15 +25,30 @@ type DB struct {
 	queryBuilder goqu.DialectWrapper
 }
 
+func (db DB) Conn() *sql.DB {
+	return db.conn.DB
+}
+
 func Make(host, port, user, password, dbname string) (DB, error) {
-	conn, err := sqlx.Open("postgres", formatConnString(host, port, user, password, dbname))
+	driverName, err := otelsql.Register(Driver,
+		otelsql.AllowRoot(),
+		otelsql.TraceQueryWithoutArgs(),
+		otelsql.TraceRowsClose(),
+		otelsql.TraceRowsAffected(),
+		otelsql.TracePing(),
+	)
 	if err != nil {
 		return DB{}, err
 	}
-	queryBuilder := goqu.Dialect("postgres")
+
+	db, err := sql.Open(driverName, formatConnString(host, port, user, password, dbname))
+	if err != nil {
+		return DB{}, err
+	}
+	queryBuilder := goqu.Dialect(Driver)
 
 	return DB{
-		conn:         conn,
+		conn:         sqlx.NewDb(db, Driver),
 		queryBuilder: queryBuilder,
 	}, nil
 }

@@ -23,7 +23,7 @@ push-image: # param: version
 # ------------- Kubernetes -------------
 
 k8s-mount-project:
-	mkdir /mnt/wsl/k8s-mount/${AGGREGATE_ID} && sudo mount --bind . /mnt/wsl/k8s-mount/${AGGREGATE_ID}
+	mkdir -p /mnt/wsl/k8s-mount/${AGGREGATE_ID} && sudo mount --bind . /mnt/wsl/k8s-mount/${AGGREGATE_ID}
 
 k8s-unit-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -short -race ${args} ./...  

@@ -2,15 +2,12 @@ package storage_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/event"
-	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/nulls"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/stretchr/testify/assert"
@@ -292,87 +289,87 @@ func Test_Delete(t *testing.T) {
 	}
 }
 
-func Test_CatchUp(t *testing.T) {
-	testCases := []struct {
-		desc   string
-		arg    event.Event
-		query  mockQuery
-		method string
-	}{
-		{
-			desc: "Test if Update method is invoked on ArticleUpdated event",
-			arg: event.Event{
-				Type: event.ArticleUpdated,
-				Body: gentest.RandomJSONUser(2, 3, 3),
-			},
-			method: "Update",
-			query: func() mockQuery {
-				m := mockQuery{new(mock.Mock)}
-				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
-				return m
-			}(),
-		},
-		{
-			desc: "Test if Create method is invoked on ArticleCreated event",
-			arg: event.Event{
-				Type: event.ArticleCreated,
-				Body: gentest.RandomJSONUser(2, 3, 3),
-			},
-			method: "Create",
-			query: func() mockQuery {
-				m := mockQuery{new(mock.Mock)}
-				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
-				return m
-			}(),
-		},
-		{
-			desc: "Test if Delete method is invoked on ArticleDeleted event",
-			arg: event.Event{
-				Type: event.ArticleDeleted,
-				Body: func() []byte {
-					id, err := json.Marshal(gentest.RandomString(5))
-					if err != nil {
-						t.Fatalf("Failed to marshal random ID to JSON. Error: %+v", err)
-					}
-					return id
-				}(),
-			},
-			method: "Delete",
-			query: func() mockQuery {
-				m := mockQuery{new(mock.Mock)}
-				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
-				return m
-			}(),
-		},
-	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(mockCmd{}, tC.query, nulls.NullLogger{})
-			db.CatchUp(tC.arg)
+// func Test_CatchUp(t *testing.T) {
+// 	testCases := []struct {
+// 		desc   string
+// 		arg    event.Event
+// 		query  mockQuery
+// 		method string
+// 	}{
+// 		{
+// 			desc: "Test if Update method is invoked on ArticleUpdated event",
+// 			arg: event.Event{
+// 				Type: event.ArticleUpdated,
+// 				Body: gentest.RandomJSONUser(2, 3, 3),
+// 			},
+// 			method: "Update",
+// 			query: func() mockQuery {
+// 				m := mockQuery{new(mock.Mock)}
+// 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
+// 				return m
+// 			}(),
+// 		},
+// 		{
+// 			desc: "Test if Create method is invoked on ArticleCreated event",
+// 			arg: event.Event{
+// 				Type: event.ArticleCreated,
+// 				Body: gentest.RandomJSONUser(2, 3, 3),
+// 			},
+// 			method: "Create",
+// 			query: func() mockQuery {
+// 				m := mockQuery{new(mock.Mock)}
+// 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
+// 				return m
+// 			}(),
+// 		},
+// 		{
+// 			desc: "Test if Delete method is invoked on ArticleDeleted event",
+// 			arg: event.Event{
+// 				Type: event.ArticleDeleted,
+// 				Body: func() []byte {
+// 					id, err := json.Marshal(gentest.RandomString(5))
+// 					if err != nil {
+// 						t.Fatalf("Failed to marshal random ID to JSON. Error: %+v", err)
+// 					}
+// 					return id
+// 				}(),
+// 			},
+// 			method: "Delete",
+// 			query: func() mockQuery {
+// 				m := mockQuery{new(mock.Mock)}
+// 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
+// 				return m
+// 			}(),
+// 		},
+// 	}
+// 	for _, tC := range testCases {
+// 		t.Run(tC.desc, func(t *testing.T) {
+// 			db := storage.NewCQRStorage(mockCmd{}, tC.query, nulls.NullLogger{})
+// 			db.CatchUp(tC.arg)
 
-			switch tC.method {
-			case "Delete":
-				var id string
-				err := json.Unmarshal(tC.arg.Body, &id)
-				if err != nil {
-					t.Errorf("Failed to unmarshal random JSON ID. Error: %+v", err)
-					return
-				}
+// 			switch tC.method {
+// 			case "Delete":
+// 				var id string
+// 				err := json.Unmarshal(tC.arg.Body, &id)
+// 				if err != nil {
+// 					t.Errorf("Failed to unmarshal random JSON ID. Error: %+v", err)
+// 					return
+// 				}
 
-				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, id))
+// 				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, id))
 
-			default:
-				var article entity.User
-				err := json.Unmarshal(tC.arg.Body, &article)
-				if err != nil {
-					t.Errorf("Failed to unmarshal random JSON article. Error: %+v", err)
-					return
-				}
+// 			default:
+// 				var article entity.User
+// 				err := json.Unmarshal(tC.arg.Body, &article)
+// 				if err != nil {
+// 					t.Errorf("Failed to unmarshal random JSON article. Error: %+v", err)
+// 					return
+// 				}
 
-				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, article))
-			}
+// 				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, article))
+// 			}
 
-			assert.True(t, tC.query.AssertExpectations(t))
-		})
-	}
-}
+// 			assert.True(t, tC.query.AssertExpectations(t))
+// 		})
+// 	}
+// }

@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: dev
+  # This service is meant to be used by clients of the database. It exposes a ClusterIP that will
+  # automatically load balance connections to the different database pods.
+  name: cockroachdb-service
+  labels:
+    database: cockroachdb
+    aggregate: user
+    version: v0.1.0
+spec:
+  clusterIP: None
+  ports:
+  # The main port, served by gRPC, serves Postgres-flavor SQL, internode
+  # traffic and the cli.
+  - port: 26257
+    targetPort: 26257
+    name: grpc
+  selector:
+    database: cockroachdb
+    aggregate: user
+    version: v0.1.0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: dev
+  name: cockroachdb-service-ui
+  labels:
+    database: cockroachdb
+    aggregate: user
+    version: v0.1.0
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8081
+    targetPort: 8080
+    name: http
+  selector:
+    database: cockroachdb
+    aggregate: user
+    version: v0.1.0
+    statefulset.kubernetes.io/pod-name: cockroachdb-cluster-0
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: dev
+  name: cockroachdb-cluster
+spec:
+  serviceName: cockroachdb-service
+  replicas: 1
+  selector:
+    matchLabels:
+      database: cockroachdb
+      aggregate: user
+      version: v0.1.0
+  template:
+    metadata:
+      namespace: dev
+      labels:
+        database: cockroachdb
+        aggregate: user
+        version: v0.1.0
+    spec:
+      volumes:
+        - name: cockroachdb-data
+          persistentVolumeClaim:
+            claimName: cockroachdb-data
+        # - name: cockroachdb-init
+        #   configMap:
+        #     name: cockroachdb-init-config
+      containers:
+      - name: cockroachdb
+        image: cockroachdb/cockroach:v22.2.2
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "50Mi"
+          limits:
+            cpu: "750m"
+            memory: "500Mi" 
+        ports:
+        - containerPort: 26257
+          name: grpc
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: cockroachdb-data
+          mountPath: /cockroach/cockroach-data
+        # - name: cockroachdb-init
+        #   mountPath: /docker-entrypoint-initdb.d/init.sh
+        #   subPath: "init.sh"
+        env:
+        - name: COCKROACH_DATABASE
+          value: user-service
+        - name: COCKROACH_USER
+          value: admin
+        - name: COCKROACH_PASSWORD
+          value: changeit
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+              divisor: "1"
+        - name: MEMORY_LIMIT_MIB
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.memory
+              divisor: "1Mi"
+        command:
+          - "/bin/bash"
+          - "-ecx"
+            # The use of qualified `hostname -f` is crucial:
+            # Other nodes aren't able to look up the unqualified hostname.
+          - exec
+            /cockroach/cockroach
+            start-single-node
+            --logtostderr
+            --insecure
+            --advertise-host $(hostname -f)
+            --http-addr 0.0.0.0
+            --cache $(expr $MEMORY_LIMIT_MIB / 4)MiB
+            --max-sql-memory $(expr $MEMORY_LIMIT_MIB / 4)MiB
+      # No pre-stop hook is required, a SIGTERM plus some time is all that's
+      # needed for graceful shutdown of a node.
+      terminationGracePeriodSeconds: 60
+  volumeClaimTemplates:
+  - metadata:
+      name: cockroachdb-data
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 1Gi
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   namespace: dev
+#   name: cockroachdb-init-config
+# data:
+#   init.sh: |
+#     echo 'CREATE DATABASE IF NOT EXISTS "user-service";' | cockroach sql --insecure
+    

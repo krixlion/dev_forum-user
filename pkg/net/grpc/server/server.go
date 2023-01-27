@@ -38,15 +38,15 @@ func (s UserServer) Close() error {
 }
 
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	User := entity.UserFromPB(req.GetUser())
+	user := entity.UserFromPB(req.GetUser())
 	id, err := uuid.NewV4()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// Assign new UUID to User about to be created.
-	User.Id = id.String()
+	// Assign new UUID to new user.
+	user.Id = id.String()
 
-	if err = s.Storage.Create(ctx, User); err != nil {
+	if err = s.Storage.Create(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -66,36 +66,54 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.
 	return &pb.DeleteUserResponse{}, nil
 }
 
-// func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-// 	defer cancel()
+func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
 
-// 	User := entity.UserFromPB(req.GetUser())
+	user := entity.UserFromPB(req.GetUser())
 
-// 	if err := s.Storage.Update(ctx, User); err != nil {
-// 		return nil, status.Errorf(codes.Internal, err.Error())
-// 	}
+	if err := s.Storage.Update(ctx, user); err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
-// 	return &pb.UpdateUserResponse{}, nil
-// }
+	return &pb.UpdateUserResponse{}, nil
+}
 
 func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	User, err := s.Storage.Get(ctx, req.GetId())
+	user, err := s.Storage.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to get User: %v", err)
+		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
 
 	return &pb.GetUserResponse{
 		User: &pb.User{
-			Id:       User.Id,
-			Name:     User.Name,
-			Password: User.Password,
-			Email:    User.Email,
+			Id:   user.Id,
+			Name: user.Name,
 		},
-	}, err
+	}, nil
+}
+
+func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest) (*pb.GetUserSecretResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	user, err := s.Storage.Get(ctx, req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
+	}
+
+	return &pb.GetUserSecretResponse{
+		User: &pb.User{
+			Id:       user.Id,
+			Name:     user.Name,
+			Password: user.Password,
+			Email:    user.Email,
+		},
+	}, nil
+
 }
 
 func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_GetStreamServer) error {

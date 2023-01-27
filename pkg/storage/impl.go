@@ -53,12 +53,12 @@ func (storage DB) GetMultiple(ctx context.Context, offset, limit string) ([]enti
 	return storage.query.GetMultiple(ctx, offset, limit)
 }
 
-func (storage DB) Update(ctx context.Context, article entity.User) error {
-	return storage.cmd.Update(ctx, article)
+func (storage DB) Update(ctx context.Context, user entity.User) error {
+	return storage.cmd.Update(ctx, user)
 }
 
-func (storage DB) Create(ctx context.Context, article entity.User) error {
-	return storage.cmd.Create(ctx, article)
+func (storage DB) Create(ctx context.Context, user entity.User) error {
+	return storage.cmd.Create(ctx, user)
 }
 
 func (storage DB) Delete(ctx context.Context, id string) error {
@@ -74,9 +74,9 @@ func (db DB) CatchUp(e event.Event) {
 	// defer span.End()
 
 	switch e.Type {
-	case event.ArticleCreated:
-		var article entity.User
-		if err := json.Unmarshal(e.Body, &article); err != nil {
+	case event.UserCreated:
+		var user entity.User
+		if err := json.Unmarshal(e.Body, &user); err != nil {
 			// // tracing.SetSpanErr(span, err)
 			db.logger.Log(ctx, "Failed to parse event",
 				"err", err,
@@ -85,16 +85,16 @@ func (db DB) CatchUp(e event.Event) {
 			return
 		}
 
-		if err := db.query.Create(ctx, article); err != nil {
+		if err := db.query.Create(ctx, user); err != nil {
 			// // tracing.SetSpanErr(span, err)
-			db.logger.Log(ctx, "Failed to create article",
+			db.logger.Log(ctx, "Failed to create user",
 				"err", err,
 				"event", e,
 			)
 		}
 		return
 
-	case event.ArticleDeleted:
+	case event.UserDeleted:
 		var id string
 		if err := json.Unmarshal(e.Body, &id); err != nil {
 			// // tracing.SetSpanErr(span, err)
@@ -106,16 +106,16 @@ func (db DB) CatchUp(e event.Event) {
 
 		if err := db.query.Delete(ctx, id); err != nil {
 			// // tracing.SetSpanErr(span, err)
-			db.logger.Log(ctx, "Failed to delete article",
+			db.logger.Log(ctx, "Failed to delete user",
 				"err", err,
 				"event", e,
 			)
 		}
 		return
 
-	case event.ArticleUpdated:
-		var article entity.User
-		if err := json.Unmarshal(e.Body, &article); err != nil {
+	case event.UserUpdated:
+		var user entity.User
+		if err := json.Unmarshal(e.Body, &user); err != nil {
 			// // tracing.SetSpanErr(span, err)
 			db.logger.Log(ctx, "Failed to parse event",
 				"err", err,
@@ -124,10 +124,10 @@ func (db DB) CatchUp(e event.Event) {
 			return
 		}
 
-		if err := db.query.Update(ctx, article); err != nil {
+		if err := db.query.Update(ctx, user); err != nil {
 			// // tracing.SetSpanErr(span, err)
 
-			db.logger.Log(ctx, "Failed to update article",
+			db.logger.Log(ctx, "Failed to update user",
 				"err", err,
 				"event", e,
 			)

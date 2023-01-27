@@ -3,15 +3,29 @@ package db
 import (
 	"context"
 	"strconv"
+	"time"
 
+	"github.com/cockroachdb/cockroach-go/crdb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/tracing"
 	"github.com/krixlion/goqu/v9"
 	"github.com/krixlion/goqu/v9/exp"
+	"go.opentelemetry.io/otel"
 )
 
+const usersTable = "users"
+
 func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
-	query, args, _ := db.queryBuilder.From("user").Where(exp.Ex{"user.id": goqu.I(id)}).Prepared(true).ToSQL()
-	user := entity.User{}
+	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Get")
+	defer span.End()
+
+	query, args, err := db.queryBuilder.From(usersTable).Where(exp.Ex{usersTable + ".id": id}).Prepared(true).ToSQL()
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return entity.User{}, err
+	}
+
+	var user entity.User
 	if err := db.conn.GetContext(ctx, &user, query, args...); err != nil {
 		return entity.User{}, err
 	}
@@ -19,34 +33,61 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 }
 
 func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
+	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.GetMultiple")
+	defer span.End()
+
 	o, err := strconv.ParseUint(offset, 10, 32)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 	l, err := strconv.ParseUint(limit, 10, 32)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
-	query, args, _ := db.queryBuilder.From("user").Limit(uint(l)).Offset(uint(o)).Prepared(true).ToSQL()
+	query, args, err := db.queryBuilder.From(usersTable).Limit(uint(l)).Offset(uint(o)).Prepared(true).ToSQL()
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return nil, err
+	}
 
 	users := []entity.User{}
-	if err := db.conn.SelectContext(ctx, &users, query, args...); err != nil {
+	err = crdb.Execute(func() error {
+		return db.conn.SelectContext(ctx, &users, query, args...)
+	})
+	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 	return users, nil
 }
 
 func (db DB) Create(ctx context.Context, user entity.User) error {
+	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Create")
+	defer span.End()
+
 	hash, err := hashPassword(user.Password)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return err
 	}
 	user.Password = hash
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
 
-	query, _, _ := db.queryBuilder.Insert("user").Rows(user).Prepared(true).ToSQL()
-
-	if _, err = db.conn.NamedExecContext(ctx, query, user); err != nil {
+	query, args, err := db.queryBuilder.Insert(usersTable).Rows(user).Prepared(true).ToSQL()
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return err
+	}
+	err = crdb.Execute(func() error {
+		_, err := db.conn.ExecContext(ctx, query, args...)
+		return err
+	})
+	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return err
 	}
 
@@ -54,18 +95,42 @@ func (db DB) Create(ctx context.Context, user entity.User) error {
 }
 
 func (db DB) Update(ctx context.Context, user entity.User) error {
-	query, _, _ := db.queryBuilder.Update("user").Set(user).Where(exp.Ex{"user.id": goqu.I(user.Id)}).Prepared(true).ToSQL()
+	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Update")
+	defer span.End()
 
-	if _, err := db.conn.NamedExecContext(ctx, query, user); err != nil {
+	query, args, err := db.queryBuilder.Update(usersTable).Set(user).Where(goqu.C("id").Eq(user.Id)).Prepared(true).ToSQL()
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return err
+	}
+
+	err = crdb.Execute(func() error {
+		_, err := db.conn.ExecContext(ctx, query, args...)
+		return err
+	})
+	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return err
 	}
 	return nil
 }
 
 func (db DB) Delete(ctx context.Context, id string) error {
-	query, _, _ := db.queryBuilder.Delete("user").Where(exp.Ex{"user.id": goqu.I(id)}).Prepared(true).ToSQL()
+	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Delete")
+	defer span.End()
 
-	if _, err := db.conn.NamedExecContext(ctx, query, id); err != nil {
+	query, _, err := db.queryBuilder.Delete(usersTable).Where(goqu.C("id").Eq(id)).Prepared(true).ToSQL()
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return err
+	}
+
+	err = crdb.Execute(func() error {
+		_, err := db.conn.ExecContext(ctx, query, id)
+		return err
+	})
+	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return err
 	}
 	return nil
