@@ -108,12 +108,12 @@ func Test_Dispatch(t *testing.T) {
 				AggregateId: "article",
 			},
 			handler: func() mocks.Handler {
-				m := mocks.Handler{new(mock.Mock)}
+				m := mocks.Handler{Mock: new(mock.Mock)}
 				m.On("Handle", mock.AnythingOfType("Event")).Return().Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{new(mock.Mock)}
+				m := mocks.Broker{Mock: new(mock.Mock)}
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),

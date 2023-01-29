@@ -158,7 +158,7 @@ func Test_Create(t *testing.T) {
 		arg      *pb.CreateUserRequest
 		dontWant *pb.CreateUserResponse
 		wantErr  bool
-		storage  storage.Storage
+		storage  mocks.Storage
 		broker   mocks.Broker
 	}{
 		{
@@ -206,10 +206,17 @@ func Test_Create(t *testing.T) {
 			client := setUpServer(ctx, tC.storage, tC.broker)
 
 			createResponse, err := client.Create(ctx, tC.arg)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("Failed to Get User, err: %v", err)
-				return
+			if err != nil {
+				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
+				if !tC.wantErr {
+					t.Errorf("Failed to Get User, err: %v", err)
+					return
+				}
+			} else {
+				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 			}
+
+			tC.storage.AssertNumberOfCalls(t, "Create", 1)
 
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
@@ -287,11 +294,17 @@ func Test_Update(t *testing.T) {
 			client := setUpServer(ctx, tC.storage, tC.broker)
 
 			got, err := client.Update(ctx, tC.arg)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("Failed to Update User, err: %v", err)
-				return
+			if err != nil {
+				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
+				if !tC.wantErr {
+					t.Errorf("Failed to Update User, err: %v", err)
+					return
+				}
+			} else {
+				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 			}
 
+			tC.storage.AssertNumberOfCalls(t, "Update", 1)
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
 			if got != tC.want {

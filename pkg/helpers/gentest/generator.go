@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func RandomString(length int) string {
@@ -42,4 +43,14 @@ func RandomJSONUser(titleLen, emailLen, passLen int) []byte {
 		panic(err)
 	}
 	return json
+}
+
+// RandomEntity returns a random hashed string and panics on error.
+// It should be used ONLY for testing.
+func RandomHash(len int) []byte {
+	hash, err := bcrypt.GenerateFromPassword([]byte(RandomString(len)), 0)
+	if err != nil {
+		panic(err)
+	}
+	return hash
 }
