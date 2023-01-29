@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
@@ -74,8 +73,6 @@ func (db DB) Create(ctx context.Context, user entity.User) error {
 		return err
 	}
 	user.Password = hash
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
 
 	query, args, err := db.queryBuilder.Insert(usersTable).Rows(user).Prepared(true).ToSQL()
 	if err != nil {

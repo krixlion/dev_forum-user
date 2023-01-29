@@ -49,6 +49,8 @@ func (b *Broker) Consume(ctx context.Context, queue string, eventType event.Even
 	events := make(chan event.Event)
 	go func() {
 		ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "broker.Consume")
+		defer span.End()
+
 		for message := range messages {
 			event := event.Event{}
 			err := json.Unmarshal(message.Body, &event)

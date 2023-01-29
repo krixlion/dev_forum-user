@@ -56,9 +56,9 @@ spec:
       containers:
         - env:
             - name: TESTING
-              value: "false"
+              value: "true"
             - name: TEST_PATH
-              value: github.com/krixlion/dev-forum_service/pkg/path/to/package
+              value: github.com/krixlion/dev_forum-user/pkg/event/dispatcher
             - name: BUILD_ARGS
               value: -race cmd/main.go
             - name: DEBUG_PORT

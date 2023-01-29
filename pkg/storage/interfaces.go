@@ -9,8 +9,7 @@ import (
 )
 
 type CQRStorage interface {
-	Getter
-	Writer
+	Storage
 	CatchUp(event.Event)
 }
 
