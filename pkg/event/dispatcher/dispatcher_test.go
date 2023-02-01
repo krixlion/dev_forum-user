@@ -94,6 +94,34 @@ func Test_mergeChans(t *testing.T) {
 	}
 }
 
+func Test_Publish(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		arg    event.Event
+		broker mocks.Broker
+	}{
+		{
+			desc: "",
+			arg:  event.MakeEvent(event.ArticleDeleted, gentest.RandomString(5)),
+			broker: func() mocks.Broker {
+				m := mocks.Broker{Mock: new(mock.Mock)}
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
+				return m
+			}(),
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			d := NewDispatcher(tC.broker, 2)
+			d.Publish(tC.arg)
+
+			tC.broker.AssertCalled(t, "ResilientPublish", tC.arg)
+			tC.broker.AssertExpectations(t)
+			tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
+		})
+	}
+}
+
 func Test_Dispatch(t *testing.T) {
 	testCases := []struct {
 		desc    string
@@ -112,11 +140,6 @@ func Test_Dispatch(t *testing.T) {
 				m.On("Handle", mock.AnythingOfType("Event")).Return().Once()
 				return m
 			}(),
-			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
-				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
-				return m
-			}(),
 		},
 	}
 	for _, tC := range testCases {
@@ -130,9 +153,6 @@ func Test_Dispatch(t *testing.T) {
 
 			tC.handler.AssertCalled(t, "Handle", tC.arg)
 			tC.handler.AssertNumberOfCalls(t, "Handle", 1)
-
-			tC.broker.AssertCalled(t, "ResilientPublish", tC.arg)
-			tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 		})
 	}
 }

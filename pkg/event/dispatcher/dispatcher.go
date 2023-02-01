@@ -48,12 +48,15 @@ func (d *Dispatcher) Subscribe(handler event.Handler, eTypes ...event.EventType)
 	}
 }
 
-func (d *Dispatcher) Dispatch(e event.Event) {
-	limit := make(chan struct{}, d.maxWorkers)
-
+func (d *Dispatcher) Publish(e event.Event) {
 	if err := d.broker.ResilientPublish(e); err != nil {
 		panic(err)
 	}
+	d.Dispatch(e)
+}
+
+func (d *Dispatcher) Dispatch(e event.Event) {
+	limit := make(chan struct{}, d.maxWorkers)
 
 	for _, handler := range d.handlers[e.Type] {
 		limit <- struct{}{}

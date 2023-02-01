@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
-	"github.com/krixlion/dev_forum-user/pkg/tracing"
 )
 
 func TestMakeEvent(t *testing.T) {
@@ -30,7 +29,7 @@ func TestMakeEvent(t *testing.T) {
 				data: randString,
 			},
 			want: Event{
-				AggregateId: tracing.ServiceName,
+				AggregateId: "user",
 				Type:        ArticleCreated,
 				Body: func() []byte {
 					data, err := json.Marshal(randString)
@@ -49,7 +48,7 @@ func TestMakeEvent(t *testing.T) {
 				data: randUser,
 			},
 			want: Event{
-				AggregateId: tracing.ServiceName,
+				AggregateId: "user",
 				Type:        UserCreated,
 				Body: func() []byte {
 					data, err := json.Marshal(randUser)

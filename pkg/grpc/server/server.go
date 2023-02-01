@@ -10,6 +10,7 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/event/dispatcher"
 	"github.com/krixlion/dev_forum-user/pkg/logging"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gofrs/uuid"
 	"google.golang.org/grpc/codes"
@@ -34,8 +35,14 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 	// Assign new UUID to new user.
 	user.Id = id.String()
+	user.Password = string(hash)
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Time{}
 
@@ -43,7 +50,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Dispatch(event.MakeEvent(event.UserCreated, user))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserCreated, user))
 
 	return &pb.CreateUserResponse{
 		Id: id.String(),
@@ -59,7 +66,7 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	s.Dispatcher.Dispatch(event.MakeEvent(event.UserDeleted, id))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserDeleted, id))
 
 	return &pb.DeleteUserResponse{}, nil
 }
@@ -75,7 +82,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Dispatch(event.MakeEvent(event.UserUpdated, user))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserUpdated, user))
 
 	return &pb.UpdateUserResponse{}, nil
 }
@@ -116,28 +123,25 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 			UpdatedAt: timestamppb.New(user.UpdatedAt),
 		},
 	}, nil
-
 }
 
 func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_GetStreamServer) error {
 	ctx, cancel := context.WithTimeout(stream.Context(), time.Second*10)
 	defer cancel()
 
-	Users, err := s.Storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit())
+	users, err := s.Storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit())
 	if err != nil {
 		return err
 	}
 
-	for _, v := range Users {
+	for _, v := range users {
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
 			User := pb.User{
-				Id:       v.Id,
-				Name:     v.Name,
-				Password: v.Password,
-				Email:    v.Email,
+				Id:   v.Id,
+				Name: v.Name,
 			}
 
 			err := stream.Send(&User)
@@ -148,11 +152,3 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 	}
 	return nil
 }
-
-// func (s UserServer) Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-// 	if info.FullMethod != "/proto.UserService/Get" {
-// 		return handler(ctx, req)
-// 	}
-// 	// metadata.FromIncomingContext(ctx)
-// 	return nil, nil
-// }

@@ -3,8 +3,6 @@ package event
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/krixlion/dev_forum-user/pkg/tracing"
 )
 
 // Events are sent to the queue in JSON format.
@@ -25,7 +23,7 @@ func MakeEvent(t EventType, data interface{}) Event {
 		panic(err)
 	}
 	return Event{
-		AggregateId: tracing.ServiceName,
+		AggregateId: "user",
 		Type:        t,
 		Body:        jsonData,
 		Timestamp:   time.Now(),

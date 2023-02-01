@@ -39,6 +39,7 @@ func main() {
 
 	service := service.NewUserService(port, getServiceDependencies())
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
 	service.Run(ctx)
 
 	<-ctx.Done()

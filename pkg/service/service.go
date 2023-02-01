@@ -50,7 +50,6 @@ func NewUserService(grpcPort int, d Dependencies) UserService {
 	}
 
 	baseSrv := grpc.NewServer(
-		// grpc.UnaryInterceptor(s.Interceptor),
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)

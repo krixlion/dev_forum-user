@@ -56,7 +56,7 @@ spec:
       containers:
         - env:
             - name: TESTING
-              value: "true"
+              value: "false"
             - name: TEST_PATH
               value: github.com/krixlion/dev_forum-user/pkg/event/dispatcher
             - name: BUILD_ARGS

@@ -408,10 +408,8 @@ func Test_GetStream(t *testing.T) {
 	var pbUsers []*pb.User
 	for _, v := range Users {
 		pbUser := &pb.User{
-			Id:       v.Id,
-			Name:     v.Name,
-			Password: v.Password,
-			Email:    v.Email,
+			Id:   v.Id,
+			Name: v.Name,
 		}
 		pbUsers = append(pbUsers, pbUser)
 	}

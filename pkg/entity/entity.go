@@ -11,8 +11,8 @@ type User struct {
 	Name      string    `db:"name" goqu:"omitempty" json:"name,omitempty"`
 	Email     string    `db:"email" goqu:"omitempty" json:"email,omitempty"`
 	Password  string    `db:"password" goqu:"omitempty" json:"password,omitempty"`
-	CreatedAt time.Time `db:"created_at" goqu:"skipupdate,omitempty" json:"created_at,omitempty"`
-	UpdatedAt time.Time `db:"updated_at" goqu:"omitempty" json:"updated_at,omitempty"`
+	CreatedAt time.Time `db:"created_at" goqu:"skipupdate,omitempty"`
+	UpdatedAt time.Time `db:"updated_at" goqu:"omitempty"`
 }
 
 func UserFromPB(v *pb.User) User {
@@ -26,7 +26,7 @@ func UserFromPB(v *pb.User) User {
 	}
 }
 
-// Add its own MarshalJSON implementation so that time.Time can be formated as needed.
+// Add its own MarshalJSON implementation so that timestamps can be formatted as needed.
 // func (u *User) MarshalJSON() ([]byte, error) {
 // 	type Alias User
 // 	return json.Marshal(&struct {
@@ -34,8 +34,8 @@ func UserFromPB(v *pb.User) User {
 // 		CreatedAt string `json:"created_at,omitempty"`
 // 		UpdatedAt string `json:"updated_at,omitempty"`
 // 	}{
-// 		Alias: (*Alias)(u),
-// 		CreatedAt: u.CreatedAt.Format("2017-01-15T01:30:15.01Z"),
-// 		UpdatedAt: u.UpdatedAt.Format("2017-01-15T01:30:15.01Z"),
+// 		Alias:     (*Alias)(u),
+// 		CreatedAt: u.CreatedAt.Format(time.RFC3339),
+// 		UpdatedAt: u.UpdatedAt.Format(time.RFC3339),
 // 	})
 // }

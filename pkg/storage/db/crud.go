@@ -35,15 +35,24 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.GetMultiple")
 	defer span.End()
 
-	o, err := strconv.ParseUint(offset, 10, 32)
-	if err != nil {
-		tracing.SetSpanErr(span, err)
-		return nil, err
+	var o uint64
+	var l uint64
+	var err error
+
+	if offset != "" {
+		o, err = strconv.ParseUint(offset, 10, 32)
+		if err != nil {
+			tracing.SetSpanErr(span, err)
+			return nil, err
+		}
 	}
-	l, err := strconv.ParseUint(limit, 10, 32)
-	if err != nil {
-		tracing.SetSpanErr(span, err)
-		return nil, err
+
+	if limit != "" {
+		l, err = strconv.ParseUint(limit, 10, 32)
+		if err != nil {
+			tracing.SetSpanErr(span, err)
+			return nil, err
+		}
 	}
 
 	query, args, err := db.queryBuilder.From(usersTable).Limit(uint(l)).Offset(uint(o)).Prepared(true).ToSQL()
@@ -66,13 +75,6 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 func (db DB) Create(ctx context.Context, user entity.User) error {
 	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Create")
 	defer span.End()
-
-	hash, err := hashPassword(user.Password)
-	if err != nil {
-		tracing.SetSpanErr(span, err)
-		return err
-	}
-	user.Password = hash
 
 	query, args, err := db.queryBuilder.Insert(usersTable).Rows(user).Prepared(true).ToSQL()
 	if err != nil {

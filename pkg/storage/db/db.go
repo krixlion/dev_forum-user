@@ -10,8 +10,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 const Driver = "postgres"
@@ -55,12 +53,4 @@ func Make(host, port, user, password, dbname string) (DB, error) {
 
 func (db DB) Close() error {
 	return db.conn.Close()
-}
-
-func hashPassword(pass string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.MinCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hash), nil
 }
