@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/krixlion/dev_forum-lib/event"
+	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/event"
-	"github.com/krixlion/dev_forum-user/pkg/logging"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // DB is a wrapper for the read model and write model to use with Storage interface.
@@ -17,13 +18,15 @@ type DB struct {
 	cmd    Eventstore
 	query  Storage
 	logger logging.Logger
+	tracer trace.Tracer
 }
 
-func NewCQRStorage(eventstore Eventstore, query Storage, logger logging.Logger) CQRStorage {
+func NewCQRStorage(eventstore Eventstore, query Storage, logger logging.Logger, tracer trace.Tracer) CQRStorage {
 	return &DB{
 		cmd:    eventstore,
 		query:  query,
 		logger: logger,
+		tracer: tracer,
 	}
 }
 
@@ -70,8 +73,8 @@ func (db DB) CatchUp(e event.Event) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	// ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "redis.CatchUp")
-	// defer span.End()
+	ctx, span := db.tracer.Start(ctx, "redis.CatchUp")
+	defer span.End()
 
 	switch e.Type {
 	case event.UserCreated:

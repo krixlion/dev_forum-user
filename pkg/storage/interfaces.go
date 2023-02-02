@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/event"
 )
 
 type CQRStorage interface {

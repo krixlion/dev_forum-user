@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/krixlion/dev_forum-lib/event"
+	"github.com/krixlion/dev_forum-lib/event/dispatcher"
+	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/event"
-	"github.com/krixlion/dev_forum-user/pkg/event/dispatcher"
-	"github.com/krixlion/dev_forum-user/pkg/logging"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"golang.org/x/crypto/bcrypt"
 

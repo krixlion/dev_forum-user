@@ -8,17 +8,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/krixlion/dev_forum-lib/env"
+	"github.com/krixlion/dev_forum-lib/event/broker"
+	"github.com/krixlion/dev_forum-lib/logging"
+	"github.com/krixlion/dev_forum-lib/tracing"
 	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
-	"github.com/krixlion/dev_forum-user/pkg/env"
-	"github.com/krixlion/dev_forum-user/pkg/event/broker"
-	"github.com/krixlion/dev_forum-user/pkg/logging"
 	"github.com/krixlion/dev_forum-user/pkg/service"
 	"github.com/krixlion/dev_forum-user/pkg/storage/db"
-	"github.com/krixlion/dev_forum-user/pkg/tracing"
 	"go.opentelemetry.io/otel"
 )
 
 var port int
+
+// Hardcoded root dir name.
+const projectDir = "app"
+const serviceName = "user-service"
 
 func init() {
 	portFlag := flag.Int("p", 50051, "The gRPC server port")
@@ -26,13 +30,10 @@ func init() {
 	port = *portFlag
 }
 
-// Hardcoded root dir name.
-const projectDir = "app"
-
 func main() {
 	env.Load(projectDir)
 
-	shutdownTracing, err := tracing.InitProvider()
+	shutdownTracing, err := tracing.InitProvider(serviceName)
 	if err != nil {
 		logging.Log("Failed to initialize tracing", "err", err)
 	}
@@ -58,6 +59,7 @@ func main() {
 }
 
 func getServiceDependencies() service.Dependencies {
+	tracer := otel.Tracer(serviceName)
 	logger, err := logging.NewLogger()
 	if err != nil {
 		panic(err)
@@ -68,7 +70,7 @@ func getServiceDependencies() service.Dependencies {
 	db_user := os.Getenv("DB_USER")
 	db_pass := os.Getenv("DB_PASS")
 	db_name := os.Getenv("DB_NAME")
-	storage, err := db.Make(db_host, db_port, db_user, db_pass, db_name)
+	storage, err := db.Make(db_host, db_port, db_user, db_pass, db_name, tracer)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +80,7 @@ func getServiceDependencies() service.Dependencies {
 	mq_user := os.Getenv("MQ_USER")
 	mq_pass := os.Getenv("MQ_PASS")
 
-	consumer := tracing.ServiceName
+	consumer := serviceName
 	mqConfig := rabbitmq.Config{
 		QueueSize:         100,
 		MaxWorkers:        100,
@@ -87,8 +89,6 @@ func getServiceDependencies() service.Dependencies {
 		ClearInterval:     time.Second * 5,
 		ClosedTimeout:     time.Second * 15,
 	}
-
-	tracer := otel.Tracer(tracing.ServiceName)
 
 	mq := rabbitmq.NewRabbitMQ(consumer, mq_user, mq_pass, mq_host, mq_port, mqConfig, logger, tracer)
 	broker := broker.NewBroker(mq, logger)

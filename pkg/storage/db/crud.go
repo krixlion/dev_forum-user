@@ -5,17 +5,16 @@ import (
 	"strconv"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
+	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/tracing"
 	"github.com/krixlion/goqu/v9"
 	"github.com/krixlion/goqu/v9/exp"
-	"go.opentelemetry.io/otel"
 )
 
 const usersTable = "users"
 
 func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
-	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Get")
+	ctx, span := db.tracer.Start(ctx, "db.Get")
 	defer span.End()
 
 	query, args, err := db.queryBuilder.From(usersTable).Where(exp.Ex{usersTable + ".id": id}).Prepared(true).ToSQL()
@@ -32,7 +31,7 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 }
 
 func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
-	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.GetMultiple")
+	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
 	var o uint64
@@ -73,7 +72,7 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 }
 
 func (db DB) Create(ctx context.Context, user entity.User) error {
-	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Create")
+	ctx, span := db.tracer.Start(ctx, "db.Create")
 	defer span.End()
 
 	query, args, err := db.queryBuilder.Insert(usersTable).Rows(user).Prepared(true).ToSQL()
@@ -94,7 +93,7 @@ func (db DB) Create(ctx context.Context, user entity.User) error {
 }
 
 func (db DB) Update(ctx context.Context, user entity.User) error {
-	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Update")
+	ctx, span := db.tracer.Start(ctx, "db.Update")
 	defer span.End()
 
 	query, args, err := db.queryBuilder.Update(usersTable).Set(user).Where(goqu.C("id").Eq(user.Id)).Prepared(true).ToSQL()
@@ -115,7 +114,7 @@ func (db DB) Update(ctx context.Context, user entity.User) error {
 }
 
 func (db DB) Delete(ctx context.Context, id string) error {
-	ctx, span := otel.Tracer(tracing.ServiceName).Start(ctx, "db.Delete")
+	ctx, span := db.tracer.Start(ctx, "db.Delete")
 	defer span.End()
 
 	query, _, err := db.queryBuilder.Delete(usersTable).Where(goqu.C("id").Eq(id)).Prepared(true).ToSQL()

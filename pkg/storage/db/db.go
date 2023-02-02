@@ -7,6 +7,7 @@ import (
 	"github.com/krixlion/goqu/v9"
 	_ "github.com/krixlion/goqu/v9/dialect/postgres"
 	"go.nhat.io/otelsql"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -21,13 +22,14 @@ func formatConnString(host, port, user, password, dbname string) string {
 type DB struct {
 	conn         *sqlx.DB
 	queryBuilder goqu.DialectWrapper
+	tracer       trace.Tracer
 }
 
 func (db DB) Conn() *sql.DB {
 	return db.conn.DB
 }
 
-func Make(host, port, user, password, dbname string) (DB, error) {
+func Make(host, port, user, password, dbname string, tracer trace.Tracer) (DB, error) {
 	driverName, err := otelsql.Register(Driver,
 		otelsql.AllowRoot(),
 		otelsql.TraceQueryWithoutArgs(),
@@ -48,6 +50,7 @@ func Make(host, port, user, password, dbname string) (DB, error) {
 	return DB{
 		conn:         sqlx.NewDb(db, Driver),
 		queryBuilder: queryBuilder,
+		tracer:       tracer,
 	}, nil
 }
 
