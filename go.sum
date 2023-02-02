@@ -168,10 +168,10 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
-github.com/krixlion/dev_forum-lib v0.0.0-20230202184322-c94132c1270b h1:ZW/26YbOgGdc+3jlZyp+y1YqrjdixtcZI1plixqyMvE=
-github.com/krixlion/dev_forum-lib v0.0.0-20230202184322-c94132c1270b/go.mod h1:kYD9HyMFDHeoAL4hO81+KryhnoYvD0rC2Cfs8ARg4jw=
-github.com/krixlion/dev_forum-lib v0.0.0-20230202192656-4fd916c74f27 h1:wrMdLl/CV5FV0fe8gB8IDt+QTRZFKgElg60qSaO0U2w=
-github.com/krixlion/dev_forum-lib v0.0.0-20230202192656-4fd916c74f27/go.mod h1:0etIh4YVu6QTn+U6qB7xX1P73OjoAL3UiOecicZ0lK8=
+github.com/krixlion/dev_forum-lib v0.0.0-20230202195133-73aa6a4179b1 h1:8LG1tBSZhoBc+NytezhbKxrioZIuAfRwOd0U20dM84k=
+github.com/krixlion/dev_forum-lib v0.0.0-20230202195133-73aa6a4179b1/go.mod h1:0etIh4YVu6QTn+U6qB7xX1P73OjoAL3UiOecicZ0lK8=
+github.com/krixlion/dev_forum-lib v0.0.0-20230202201221-7bfcc84ebd1b h1:cCywWdf9Spa2c4jhHKhiEvhAvhiZFSr8ST//8kWpXe4=
+github.com/krixlion/dev_forum-lib v0.0.0-20230202201221-7bfcc84ebd1b/go.mod h1:0etIh4YVu6QTn+U6qB7xX1P73OjoAL3UiOecicZ0lK8=
 github.com/krixlion/dev_forum-proto v0.0.0-20230125135445-2b61385445fd h1:k14X0+Bf4iWws6TeyBTrpKwsCiwSHhVSjNCisQcfBWM=
 github.com/krixlion/dev_forum-proto v0.0.0-20230125135445-2b61385445fd/go.mod h1:uikBb+QJrQo3V9Zt8hpnYWqfEq32Oif70Zg565TBMX0=
 github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230117212649-13191a7dfea7 h1:rIxbnoph5qH3UD5A5IEiLwuf/RiL8rO9agbowxxDh/g=

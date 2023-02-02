@@ -50,7 +50,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserCreated, user))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserCreated, user))
 
 	return &pb.CreateUserResponse{
 		Id: id.String(),
@@ -66,7 +66,7 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserDeleted, id))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
 
 	return &pb.DeleteUserResponse{}, nil
 }
@@ -82,7 +82,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserUpdated, user))
+	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
 
 	return &pb.UpdateUserResponse{}, nil
 }

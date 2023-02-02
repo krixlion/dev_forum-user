@@ -7,7 +7,6 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/go-cmp v0.5.9
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/krixlion/dev_forum-lib v0.0.0-20230202192656-4fd916c74f27
 	github.com/krixlion/dev_forum-proto v0.0.0-20230125135445-2b61385445fd
 	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230117212649-13191a7dfea7
 	github.com/krixlion/goqu/v9 v9.18.0
@@ -33,6 +32,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
+	github.com/krixlion/dev_forum-lib v0.0.0-20230202201221-7bfcc84ebd1b // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
