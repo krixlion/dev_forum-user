@@ -23,11 +23,12 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 		return entity.User{}, err
 	}
 
-	var user entity.User
-	if err := db.conn.GetContext(ctx, &user, query, args...); err != nil {
+	var dataset userDataset
+	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
 		return entity.User{}, err
 	}
-	return user, nil
+
+	return userFromDataset(dataset), nil
 }
 
 func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
@@ -60,22 +61,24 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 		return nil, err
 	}
 
-	users := []entity.User{}
+	datasets := []userDataset{}
 	err = crdb.Execute(func() error {
-		return db.conn.SelectContext(ctx, &users, query, args...)
+		return db.conn.SelectContext(ctx, &datasets, query, args...)
 	})
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
-	return users, nil
+	return usersFromDatasets(datasets), nil
 }
 
 func (db DB) Create(ctx context.Context, user entity.User) error {
 	ctx, span := db.tracer.Start(ctx, "db.Create")
 	defer span.End()
 
-	query, args, err := db.queryBuilder.Insert(usersTable).Rows(user).Prepared(true).ToSQL()
+	dataset := datasetFromUser(user)
+
+	query, args, err := db.queryBuilder.Insert(usersTable).Rows(dataset).Prepared(true).ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return err
@@ -96,7 +99,9 @@ func (db DB) Update(ctx context.Context, user entity.User) error {
 	ctx, span := db.tracer.Start(ctx, "db.Update")
 	defer span.End()
 
-	query, args, err := db.queryBuilder.Update(usersTable).Set(user).Where(goqu.C("id").Eq(user.Id)).Prepared(true).ToSQL()
+	dataset := datasetFromUser(user)
+
+	query, args, err := db.queryBuilder.Update(usersTable).Set(dataset).Where(goqu.C("id").Eq(dataset.Id)).Prepared(true).ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return err

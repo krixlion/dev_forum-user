@@ -32,14 +32,14 @@ func init() {
 
 func main() {
 	env.Load(projectDir)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	shutdownTracing, err := tracing.InitProvider(serviceName)
+	shutdownTracing, err := tracing.InitProvider(ctx, serviceName)
 	if err != nil {
 		logging.Log("Failed to initialize tracing", "err", err)
 	}
 
 	service := service.NewUserService(port, getServiceDependencies())
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	service.Run(ctx)
 
@@ -58,6 +58,7 @@ func main() {
 	}()
 }
 
+// getServiceDependencies is a Composition root.
 func getServiceDependencies() service.Dependencies {
 	tracer := otel.Tracer(serviceName)
 	logger, err := logging.NewLogger()
@@ -91,7 +92,8 @@ func getServiceDependencies() service.Dependencies {
 	}
 
 	mq := rabbitmq.NewRabbitMQ(consumer, mq_user, mq_pass, mq_host, mq_port, mqConfig, logger, tracer)
-	broker := broker.NewBroker(mq, logger)
+	broker := broker.NewBroker(mq, logger, tracer)
+
 	return service.Dependencies{
 		Storage: storage,
 		Logger:  logger,
