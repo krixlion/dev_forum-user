@@ -21,7 +21,7 @@ func Test_Get(t *testing.T) {
 		id  string
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		query   mocks.Storage[entity.User]
 		args    args
@@ -56,20 +56,20 @@ func Test_Get(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(nil, tC.query, nulls.NullLogger{}, nulls.NullTracer{})
-			got, err := db.Get(tC.args.ctx, tC.args.id)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("storage.Get():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			db := storage.NewCQRStorage(nil, tt.query, nulls.NullLogger{}, nulls.NullTracer{})
+			got, err := db.Get(tt.args.ctx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.Get():\n error = %+v\n wantErr = %+v\n", err, tt.wantErr)
 				return
 			}
 
-			if !cmp.Equal(got, tC.want) {
-				t.Errorf("storage.Get():\n got = %+v\n want = %+v\n", got, tC.want)
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("storage.Get():\n got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}
-			assert.True(t, tC.query.AssertCalled(t, "Get", mock.Anything, tC.args.id))
+			assert.True(t, tt.query.AssertCalled(t, "Get", mock.Anything, tt.args.id))
 		})
 	}
 }
@@ -80,7 +80,7 @@ func Test_GetMultiple(t *testing.T) {
 		limit  string
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		query   mocks.Storage[entity.User]
 		args    args
@@ -117,21 +117,21 @@ func Test_GetMultiple(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(mocks.Eventstore[entity.User]{}, tC.query, nulls.NullLogger{}, nulls.NullTracer{})
-			got, err := db.GetMultiple(tC.args.ctx, tC.args.offset, tC.args.limit)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("storage.GetMultiple():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			db := storage.NewCQRStorage(mocks.Eventstore[entity.User]{}, tt.query, nulls.NullLogger{}, nulls.NullTracer{})
+			got, err := db.GetMultiple(tt.args.ctx, tt.args.offset, tt.args.limit)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.GetMultiple():\n error = %+v\n wantErr = %+v\n", err, tt.wantErr)
 				return
 			}
 
-			if !cmp.Equal(got, tC.want, cmpopts.EquateEmpty()) {
-				t.Errorf("storage.GetMultiple():\n got = %+v\n want = %+v\n", got, tC.want)
+			if !cmp.Equal(got, tt.want, cmpopts.EquateEmpty()) {
+				t.Errorf("storage.GetMultiple():\n got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}
 
-			assert.True(t, tC.query.AssertCalled(t, "GetMultiple", mock.Anything, tC.args.offset, tC.args.limit))
+			assert.True(t, tt.query.AssertCalled(t, "GetMultiple", mock.Anything, tt.args.offset, tt.args.limit))
 		})
 	}
 }
@@ -141,7 +141,7 @@ func Test_Create(t *testing.T) {
 		article entity.User
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		cmd     mocks.Eventstore[entity.User]
 		args    args
@@ -173,15 +173,15 @@ func Test_Create(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(tC.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
-			err := db.Create(tC.args.ctx, tC.args.article)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("storage.Create():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			db := storage.NewCQRStorage(tt.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
+			err := db.Create(tt.args.ctx, tt.args.article)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.Create():\n error = %+v\n wantErr = %+v\n", err, tt.wantErr)
 				return
 			}
-			assert.True(t, tC.cmd.AssertCalled(t, "Create", mock.Anything, tC.args.article))
+			assert.True(t, tt.cmd.AssertCalled(t, "Create", mock.Anything, tt.args.article))
 		})
 	}
 }
@@ -191,7 +191,7 @@ func Test_Update(t *testing.T) {
 		article entity.User
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		cmd     mocks.Eventstore[entity.User]
 		args    args
@@ -224,15 +224,15 @@ func Test_Update(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(tC.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
-			err := db.Update(tC.args.ctx, tC.args.article)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("storage.Update():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			db := storage.NewCQRStorage(tt.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
+			err := db.Update(tt.args.ctx, tt.args.article)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.Update():\n error = %+v\n wantErr = %+v\n", err, tt.wantErr)
 				return
 			}
-			assert.True(t, tC.cmd.AssertCalled(t, "Update", mock.Anything, tC.args.article))
+			assert.True(t, tt.cmd.AssertCalled(t, "Update", mock.Anything, tt.args.article))
 		})
 	}
 }
@@ -242,7 +242,7 @@ func Test_Delete(t *testing.T) {
 		id  string
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		cmd     mocks.Eventstore[entity.User]
 		args    args
@@ -275,22 +275,22 @@ func Test_Delete(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			db := storage.NewCQRStorage(tC.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
-			err := db.Delete(tC.args.ctx, tC.args.id)
-			if (err != nil) != tC.wantErr {
-				t.Errorf("storage.Delete():\n error = %+v\n wantErr = %+v\n", err, tC.wantErr)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			db := storage.NewCQRStorage(tt.cmd, mocks.Storage[entity.User]{}, nulls.NullLogger{}, nulls.NullTracer{})
+			err := db.Delete(tt.args.ctx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.Delete():\n error = %+v\n wantErr = %+v\n", err, tt.wantErr)
 				return
 			}
-			assert.True(t, tC.cmd.AssertCalled(t, "Delete", mock.Anything, tC.args.id))
-			assert.True(t, tC.cmd.AssertExpectations(t))
+			assert.True(t, tt.cmd.AssertCalled(t, "Delete", mock.Anything, tt.args.id))
+			assert.True(t, tt.cmd.AssertExpectations(t))
 		})
 	}
 }
 
 // func Test_CatchUp(t *testing.T) {
-// 	testCases := []struct {
+// 	tests := []struct {
 // 		desc   string
 // 		arg    event.Event
 // 		query  mocks.Storage[entity.User]
@@ -342,34 +342,34 @@ func Test_Delete(t *testing.T) {
 // 			}(),
 // 		},
 // 	}
-// 	for _, tC := range testCases {
-// 		t.Run(tC.desc, func(t *testing.T) {
-// 			db := storage.NewCQRStorage(mocks.Storage[entity.User]{}, tC.query, nulls.NullLogger{}, nulls.NullTracer{})
-// 			db.CatchUp(tC.arg)
+// 	for _, tt := range tests {
+// 		t.Run(tt.desc, func(t *testing.T) {
+// 			db := storage.NewCQRStorage(mocks.Storage[entity.User]{}, tt.query, nulls.NullLogger{}, nulls.NullTracer{})
+// 			db.CatchUp(tt.arg)
 
-// 			switch tC.method {
+// 			switch tt.method {
 // 			case "Delete":
 // 				var id string
-// 				err := json.Unmarshal(tC.arg.Body, &id)
+// 				err := json.Unmarshal(tt.arg.Body, &id)
 // 				if err != nil {
 // 					t.Errorf("Failed to unmarshal random JSON ID. Error: %+v", err)
 // 					return
 // 				}
 
-// 				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, id))
+// 				assert.True(t, tt.query.AssertCalled(t, tt.method, mock.Anything, id))
 
 // 			default:
 // 				var article entity.User
-// 				err := json.Unmarshal(tC.arg.Body, &article)
+// 				err := json.Unmarshal(tt.arg.Body, &article)
 // 				if err != nil {
 // 					t.Errorf("Failed to unmarshal random JSON article. Error: %+v", err)
 // 					return
 // 				}
 
-// 				assert.True(t, tC.query.AssertCalled(t, tC.method, mock.Anything, article))
+// 				assert.True(t, tt.query.AssertCalled(t, tt.method, mock.Anything, article))
 // 			}
 
-// 			assert.True(t, tC.query.AssertExpectations(t))
+// 			assert.True(t, tt.query.AssertExpectations(t))
 // 		})
 // 	}
 // }

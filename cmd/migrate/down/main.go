@@ -24,17 +24,16 @@ func main() {
 	db_user := os.Getenv("DB_USER")
 	db_pass := os.Getenv("DB_PASS")
 	db_name := os.Getenv("DB_NAME")
-
 	storage, err := db.Make(db_host, db_port, db_user, db_pass, db_name, tracer)
 	if err != nil {
-		log.Fatalf("Failed to migrate: %v", err)
+		log.Fatalf("Failed to make DB: %v", err)
 	}
 
 	if err := goose.SetDialect(db.Driver); err != nil {
-		log.Fatalf("Failed to migrate: %v", err)
+		log.Fatalf("Failed to set dialect: %v", err)
 	}
 
-	if err := goose.Up(storage.Conn(), "."); err != nil {
+	if err := goose.Down(storage.Conn(), "."); err != nil {
 		log.Fatalf("Failed to migrate: %v", err)
 	}
 }

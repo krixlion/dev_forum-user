@@ -70,7 +70,7 @@ func Test_Get(t *testing.T) {
 		Name: v.Name,
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		arg     *pb.GetUserRequest
 		want    *pb.GetUserResponse
@@ -116,27 +116,27 @@ func Test_Get(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			ctx, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
 
-			client := setUpServer(ctx, tC.storage, tC.broker)
+			client := setUpServer(ctx, tt.storage, tt.broker)
 
 			ctx, cancel := context.WithTimeout(ctx, time.Second)
 			defer cancel()
 
-			getResponse, err := client.Get(ctx, tC.arg)
-			if (err != nil) != tC.wantErr {
+			getResponse, err := client.Get(ctx, tt.arg)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Failed to Get User, err: %v", err)
 				return
 			}
 
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
-			if getResponse != tC.want {
-				if !cmp.Equal(getResponse.User, tC.want.User, cmpopts.IgnoreUnexported(pb.User{})) {
-					t.Errorf("Users are not equal:\n Got = %+v\n, want = %+v\n", getResponse.User, tC.want.User)
+			if getResponse != tt.want {
+				if !cmp.Equal(getResponse.User, tt.want.User, cmpopts.IgnoreUnexported(pb.User{})) {
+					t.Errorf("Users are not equal:\n Got = %+v\n, want = %+v\n", getResponse.User, tt.want.User)
 					return
 				}
 			}
@@ -153,7 +153,7 @@ func Test_Create(t *testing.T) {
 		Email:    v.Email,
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc     string
 		arg      *pb.CreateUserRequest
 		dontWant *pb.CreateUserResponse
@@ -199,30 +199,30 @@ func Test_Create(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			ctx, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
-			client := setUpServer(ctx, tC.storage, tC.broker)
+			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			createResponse, err := client.Create(ctx, tC.arg)
+			createResponse, err := client.Create(ctx, tt.arg)
 			if err != nil {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
-				if !tC.wantErr {
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
+				if !tt.wantErr {
 					t.Errorf("Failed to Get User, err: %v", err)
 					return
 				}
 			} else {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 			}
 
-			tC.storage.AssertNumberOfCalls(t, "Create", 1)
+			tt.storage.AssertNumberOfCalls(t, "Create", 1)
 
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
-			if createResponse != tC.dontWant {
-				if cmp.Equal(createResponse.Id, tC.dontWant.Id) {
-					t.Errorf("User IDs was not reassigned:\n Got = %+v\n want = %+v\n", createResponse.Id, tC.dontWant.Id)
+			if createResponse != tt.dontWant {
+				if cmp.Equal(createResponse.Id, tt.dontWant.Id) {
+					t.Errorf("User IDs was not reassigned:\n Got = %+v\n want = %+v\n", createResponse.Id, tt.dontWant.Id)
 					return
 				}
 				if _, err := uuid.FromString(createResponse.Id); err != nil {
@@ -243,7 +243,7 @@ func Test_Update(t *testing.T) {
 		Email:    v.Email,
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		arg     *pb.UpdateUserRequest
 		want    *pb.UpdateUserResponse
@@ -287,29 +287,29 @@ func Test_Update(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			ctx, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
-			client := setUpServer(ctx, tC.storage, tC.broker)
+			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			got, err := client.Update(ctx, tC.arg)
+			got, err := client.Update(ctx, tt.arg)
 			if err != nil {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
-				if !tC.wantErr {
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
+				if !tt.wantErr {
 					t.Errorf("Failed to Update User, err: %v", err)
 					return
 				}
 			} else {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 			}
 
-			tC.storage.AssertNumberOfCalls(t, "Update", 1)
+			tt.storage.AssertNumberOfCalls(t, "Update", 1)
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
-			if got != tC.want {
-				if !cmp.Equal(got, tC.want, cmpopts.IgnoreUnexported(pb.UpdateUserResponse{})) {
-					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tC.want)
+			if got != tt.want {
+				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.UpdateUserResponse{})) {
+					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 					return
 				}
 			}
@@ -326,7 +326,7 @@ func Test_Delete(t *testing.T) {
 		Email:    v.Email,
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		arg     *pb.DeleteUserRequest
 		want    *pb.DeleteUserResponse
@@ -371,27 +371,27 @@ func Test_Delete(t *testing.T) {
 		},
 	}
 
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			ctx, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
-			client := setUpServer(ctx, tC.storage, tC.broker)
+			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			got, err := client.Delete(ctx, tC.arg)
+			got, err := client.Delete(ctx, tt.arg)
 			if err != nil {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
 
-				if !tC.wantErr {
+				if !tt.wantErr {
 					t.Errorf("Failed to Delete User, err: %v", err)
 					return
 				}
 			} else {
-				tC.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
+				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
 			}
-			tC.storage.AssertNumberOfCalls(t, "Delete", 1)
+			tt.storage.AssertNumberOfCalls(t, "Delete", 1)
 
-			if !cmp.Equal(got, tC.want, cmpopts.IgnoreUnexported(pb.DeleteUserResponse{})) {
-				t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tC.want)
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.DeleteUserResponse{})) {
+				t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}
 		})
@@ -414,7 +414,7 @@ func Test_GetStream(t *testing.T) {
 		pbUsers = append(pbUsers, pbUser)
 	}
 
-	testCases := []struct {
+	tests := []struct {
 		desc    string
 		arg     *pb.GetUsersRequest
 		want    []*pb.User
@@ -457,30 +457,30 @@ func Test_GetStream(t *testing.T) {
 			}(),
 		},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			ctx, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
-			client := setUpServer(ctx, tC.storage, tC.broker)
+			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			stream, err := client.GetStream(ctx, tC.arg)
+			stream, err := client.GetStream(ctx, tt.arg)
 			if err != nil {
 				t.Errorf("Failed to Get stream, err: %v", err)
 				return
 			}
 
 			var got []*pb.User
-			for i := 0; i < len(tC.want); i++ {
+			for i := 0; i < len(tt.want); i++ {
 				User, err := stream.Recv()
-				if (err != nil) != tC.wantErr {
+				if (err != nil) != tt.wantErr {
 					t.Errorf("Failed to receive User from stream, err: %v", err)
 					return
 				}
 				got = append(got, User)
 			}
 
-			if !cmp.Equal(got, tC.want, cmpopts.IgnoreUnexported(pb.User{})) {
-				t.Errorf("Users are not equal:\n Got = %+v\n want = %+v\n", got, tC.want)
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.User{})) {
+				t.Errorf("Users are not equal:\n Got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}
 		})

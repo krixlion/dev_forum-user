@@ -28,7 +28,12 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 		return entity.User{}, err
 	}
 
-	return userFromDataset(dataset), nil
+	user, err := userFromDataset(dataset)
+	if err != nil {
+		return entity.User{}, err
+	}
+
+	return user, nil
 }
 
 func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
@@ -69,7 +74,13 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
-	return usersFromDatasets(datasets), nil
+
+	users, err := usersFromDatasets(datasets)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (db DB) Create(ctx context.Context, user entity.User) error {

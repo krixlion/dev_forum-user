@@ -8,7 +8,6 @@ import (
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-proto/user_service/pb"
-	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"golang.org/x/crypto/bcrypt"
 
@@ -30,7 +29,7 @@ func (s UserServer) Close() error {
 }
 
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	user := entity.UserFromPB(req.GetUser())
+	user := userFromPB(req.GetUser())
 	id, err := uuid.NewV4()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -75,7 +74,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	user := entity.UserFromPB(req.GetUser())
+	user := userFromPB(req.GetUser())
 	user.UpdatedAt = time.Now()
 
 	if err := s.Storage.Update(ctx, user); err != nil {

@@ -94,7 +94,7 @@ spec:
         #   subPath: "init.sh"
         env:
         - name: COCKROACH_DATABASE
-          value: user-service
+          value: postgres
         - name: COCKROACH_USER
           value: admin
         - name: COCKROACH_PASSWORD
