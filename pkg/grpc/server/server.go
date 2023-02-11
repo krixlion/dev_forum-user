@@ -138,13 +138,12 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 		case <-ctx.Done():
 			return nil
 		default:
-			User := pb.User{
+			user := pb.User{
 				Id:   v.Id,
 				Name: v.Name,
 			}
 
-			err := stream.Send(&User)
-			if err != nil {
+			if err := stream.Send(&user); err != nil {
 				return err
 			}
 		}

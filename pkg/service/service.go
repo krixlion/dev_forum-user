@@ -54,8 +54,10 @@ func NewUserService(grpcPort int, d Dependencies) UserService {
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
 	s.grpcServer = baseSrv
+
 	reflection.Register(s.grpcServer)
 	pb.RegisterUserServiceServer(s.grpcServer, s.server)
+
 	return s
 }
 

@@ -24,7 +24,6 @@ func datasetFromUser(v entity.User) userDataset {
 		CreatedAt: v.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: v.UpdatedAt.Format(time.RFC3339),
 	}
-
 }
 
 func userFromDataset(v userDataset) (entity.User, error) {
