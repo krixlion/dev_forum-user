@@ -4,6 +4,7 @@ export $(shell sed 's/=.*//' .env)
 
 kubernetes = kubectl -n dev
 docker-compose = docker compose -f docker-compose.dev.yml --env-file .env
+sql := $(shell cat test/seed.sql)
 
 mod-init:
 	go mod init	github.com/krixlion/$(PROJECT_NAME)-$(AGGREGATE_ID)
@@ -26,8 +27,7 @@ k8s-db-migrate-down:
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go run cmd/migrate/down/main.go
 
 k8s-db-seed:
-	$(kubernetes) exec -it cockroachdb-cluster-0 -- cockroach sql --insecure --execute='TRUNCATE "users";'
-	$(kubernetes) exec -it cockroachdb-cluster-0 -- cockroach sql --insecure --execute="INSERT INTO users (id, name, email, password) VALUES ('1', 'name-1', 'email-1', 'pass-1'), ('2', 'name-2', 'email-2', 'pass-2'), ('3', 'name-3', 'email-3', 'pass-3'), ('test', 'testName', 'test@test.test', 'testPass');"
+	$(kubernetes) exec -it cockroachdb-cluster-0 -- cockroach sql --insecure --execute="$(sql)"
 
 k8s-unit-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -short -race ${args} ./...  

@@ -76,20 +76,20 @@ func getServiceDependencies() service.Dependencies {
 		panic(err)
 	}
 
-	db_port := os.Getenv("DB_PORT")
-	db_host := os.Getenv("DB_HOST")
-	db_user := os.Getenv("DB_USER")
-	db_pass := os.Getenv("DB_PASS")
-	db_name := os.Getenv("DB_NAME")
-	storage, err := db.Make(db_host, db_port, db_user, db_pass, db_name, tracer)
+	dbPort := os.Getenv("DB_PORT")
+	dbHost := os.Getenv("DB_HOST")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbName := os.Getenv("DB_NAME")
+	storage, err := db.Make(dbHost, dbPort, dbUser, dbPass, dbName, tracer)
 	if err != nil {
 		panic(err)
 	}
 
-	mq_port := os.Getenv("MQ_PORT")
-	mq_host := os.Getenv("MQ_HOST")
-	mq_user := os.Getenv("MQ_USER")
-	mq_pass := os.Getenv("MQ_PASS")
+	mqPort := os.Getenv("MQ_PORT")
+	mqHost := os.Getenv("MQ_HOST")
+	mqUser := os.Getenv("MQ_USER")
+	mqPass := os.Getenv("MQ_PASS")
 
 	consumer := serviceName
 	mqConfig := rabbitmq.Config{
@@ -101,11 +101,20 @@ func getServiceDependencies() service.Dependencies {
 		ClosedTimeout:     time.Second * 15,
 	}
 
-	mq := rabbitmq.NewRabbitMQ(consumer, mq_user, mq_pass, mq_host, mq_port, mqConfig, rabbitmq.WithLogger(logger), rabbitmq.WithTracer(tracer))
-	broker := broker.NewBroker(mq, logger, tracer)
+	messageQueue := rabbitmq.NewRabbitMQ(
+		consumer,
+		mqUser,
+		mqPass,
+		mqHost,
+		mqPort,
+		mqConfig,
+		rabbitmq.WithLogger(logger),
+		rabbitmq.WithTracer(tracer),
+	)
+	broker := broker.NewBroker(messageQueue, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(broker, 20)
 
-	server := server.NewUserServer(storage, logger, dispatcher)
+	userServer := server.NewUserServer(storage, logger, dispatcher)
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 
@@ -113,15 +122,15 @@ func getServiceDependencies() service.Dependencies {
 			grpc_recovery.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(zap.L()),
 			otelgrpc.UnaryServerInterceptor(),
-			server.ValidateRequestInterceptor(),
+			userServer.ValidateRequestInterceptor(),
 		),
 	)
 	reflection.Register(grpcServer)
-	pb.RegisterUserServiceServer(grpcServer, server)
+	pb.RegisterUserServiceServer(grpcServer, userServer)
 
 	closeFunc := func() error {
 		grpcServer.GracefulStop()
-		return server.Close()
+		return userServer.Close()
 	}
 
 	return service.Dependencies{

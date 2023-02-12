@@ -23,12 +23,12 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 		return entity.User{}, err
 	}
 
-	var dataset userDataset
+	var dataset sqlUser
 	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
 		return entity.User{}, err
 	}
 
-	user, err := userFromDataset(dataset)
+	user, err := dataset.User()
 	if err != nil {
 		return entity.User{}, err
 	}
@@ -66,7 +66,7 @@ func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]en
 		return nil, err
 	}
 
-	datasets := []userDataset{}
+	datasets := []sqlUser{}
 	err = crdb.Execute(func() error {
 		return db.conn.SelectContext(ctx, &datasets, query, args...)
 	})

@@ -6,7 +6,7 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
-type userDataset struct {
+type sqlUser struct {
 	Id        string `db:"id" goqu:"skipupdate,omitempty"`
 	Name      string `db:"name" goqu:"omitempty"`
 	Email     string `db:"email" goqu:"omitempty"`
@@ -15,8 +15,8 @@ type userDataset struct {
 	UpdatedAt string `db:"updated_at" goqu:"omitempty"`
 }
 
-func datasetFromUser(v entity.User) userDataset {
-	return userDataset{
+func datasetFromUser(v entity.User) sqlUser {
+	return sqlUser{
 		Id:        v.Id,
 		Name:      v.Name,
 		Password:  v.Password,
@@ -26,7 +26,7 @@ func datasetFromUser(v entity.User) userDataset {
 	}
 }
 
-func userFromDataset(v userDataset) (entity.User, error) {
+func (v sqlUser) User() (entity.User, error) {
 	createdAt, err := time.Parse(time.RFC3339, v.CreatedAt)
 	if err != nil {
 		return entity.User{}, err
@@ -47,26 +47,12 @@ func userFromDataset(v userDataset) (entity.User, error) {
 	}, nil
 }
 
-func usersFromDatasets(vs []userDataset) ([]entity.User, error) {
+func usersFromDatasets(vs []sqlUser) ([]entity.User, error) {
 	users := []entity.User{}
 	for _, v := range vs {
-		createdAt, err := time.Parse(time.RFC3339, v.CreatedAt)
+		user, err := v.User()
 		if err != nil {
 			return nil, err
-		}
-
-		updatedAt, err := time.Parse(time.RFC3339, v.UpdatedAt)
-		if err != nil {
-			return nil, err
-		}
-
-		user := entity.User{
-			Id:        v.Id,
-			Name:      v.Name,
-			Password:  v.Password,
-			Email:     v.Email,
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
 		}
 		users = append(users, user)
 	}
