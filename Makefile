@@ -10,12 +10,6 @@ mod-init:
 	go mod tidy
 	go mod vendor
 
-run-local:
-	go run ./...
-
-build-local:
-	go build
-
 push-image: # param: version
 	docker build deployment/ -t krixlion/$(PROJECT_NAME)_$(AGGREGATE_ID):$(version)
 	docker push krixlion/$(PROJECT_NAME)_$(AGGREGATE_ID):$(version)
@@ -38,8 +32,7 @@ k8s-db-seed:
 k8s-unit-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -short -race ${args} ./...  
 
-k8s-integration-test: # param: args
-	make k8s-db-seed
+k8s-integration-test: k8s-db-seed # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -race ${args} ./...  
 
 k8s-test-gen-coverage:

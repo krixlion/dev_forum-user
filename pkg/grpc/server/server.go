@@ -19,13 +19,21 @@ import (
 
 type UserServer struct {
 	pb.UnimplementedUserServiceServer
-	Storage    storage.Storage
-	Logger     logging.Logger
-	Dispatcher *dispatcher.Dispatcher
+	storage    storage.Storage
+	logger     logging.Logger
+	dispatcher *dispatcher.Dispatcher
+}
+
+func NewUserServer(storage storage.Storage, logger logging.Logger, dispatcher *dispatcher.Dispatcher) UserServer {
+	return UserServer{
+		storage:    storage,
+		logger:     logger,
+		dispatcher: dispatcher,
+	}
 }
 
 func (s UserServer) Close() error {
-	return s.Storage.Close()
+	return s.storage.Close()
 }
 
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
@@ -45,11 +53,11 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Time{}
 
-	if err = s.Storage.Create(ctx, user); err != nil {
+	if err := s.storage.Create(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserCreated, user))
+	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserCreated, user))
 
 	return &pb.CreateUserResponse{
 		Id: id.String(),
@@ -61,11 +69,11 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.
 	defer cancel()
 	id := req.GetId()
 
-	if err := s.Storage.Delete(ctx, id); err != nil {
+	if err := s.storage.Delete(ctx, id); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
+	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
 
 	return &pb.DeleteUserResponse{}, nil
 }
@@ -77,11 +85,11 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.
 	user := userFromPB(req.GetUser())
 	user.UpdatedAt = time.Now()
 
-	if err := s.Storage.Update(ctx, user); err != nil {
+	if err := s.storage.Update(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.Dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
+	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
 
 	return &pb.UpdateUserResponse{}, nil
 }
@@ -90,7 +98,7 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	user, err := s.Storage.Get(ctx, req.GetId())
+	user, err := s.storage.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
@@ -107,7 +115,7 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	user, err := s.Storage.Get(ctx, req.GetId())
+	user, err := s.storage.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
@@ -128,7 +136,7 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 	ctx, cancel := context.WithTimeout(stream.Context(), time.Second*10)
 	defer cancel()
 
-	users, err := s.Storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit())
+	users, err := s.storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit())
 	if err != nil {
 		return err
 	}

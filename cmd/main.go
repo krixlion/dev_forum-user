@@ -8,14 +8,24 @@ import (
 	"syscall"
 	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/krixlion/dev_forum-lib/env"
 	"github.com/krixlion/dev_forum-lib/event/broker"
+	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-lib/tracing"
+	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
+	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
 	"github.com/krixlion/dev_forum-user/pkg/service"
 	"github.com/krixlion/dev_forum-user/pkg/storage/db"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var port int
@@ -40,7 +50,6 @@ func main() {
 	}
 
 	service := service.NewUserService(port, getServiceDependencies())
-
 	service.Run(ctx)
 
 	<-ctx.Done()
@@ -59,6 +68,7 @@ func main() {
 }
 
 // getServiceDependencies is a Composition root.
+// Panics on any non-nil error.
 func getServiceDependencies() service.Dependencies {
 	tracer := otel.Tracer(serviceName)
 	logger, err := logging.NewLogger()
@@ -91,12 +101,34 @@ func getServiceDependencies() service.Dependencies {
 		ClosedTimeout:     time.Second * 15,
 	}
 
-	mq := rabbitmq.NewRabbitMQ(consumer, mq_user, mq_pass, mq_host, mq_port, mqConfig, logger, tracer)
+	mq := rabbitmq.NewRabbitMQ(consumer, mq_user, mq_pass, mq_host, mq_port, mqConfig, rabbitmq.WithLogger(logger), rabbitmq.WithTracer(tracer))
 	broker := broker.NewBroker(mq, logger, tracer)
+	dispatcher := dispatcher.NewDispatcher(broker, 20)
+
+	server := server.NewUserServer(storage, logger, dispatcher)
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+
+		grpc_middleware.WithUnaryServerChain(
+			grpc_recovery.UnaryServerInterceptor(),
+			grpc_zap.UnaryServerInterceptor(zap.L()),
+			otelgrpc.UnaryServerInterceptor(),
+			server.ValidateRequestInterceptor(),
+		),
+	)
+	reflection.Register(grpcServer)
+	pb.RegisterUserServiceServer(grpcServer, server)
+
+	closeFunc := func() error {
+		grpcServer.GracefulStop()
+		return server.Close()
+	}
 
 	return service.Dependencies{
-		Storage: storage,
-		Logger:  logger,
-		Broker:  broker,
+		Logger:       logger,
+		Dispatcher:   dispatcher,
+		GRPCServer:   grpcServer,
+		Broker:       broker,
+		ShutdownFunc: closeFunc,
 	}
 }

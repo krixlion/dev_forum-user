@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
+	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
@@ -38,10 +39,7 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 	}
 
 	s := grpc.NewServer()
-	server := server.UserServer{
-		Storage:    db,
-		Dispatcher: dispatcher.NewDispatcher(mq, 0),
-	}
+	server := server.NewUserServer(db, nulls.NullLogger{}, dispatcher.NewDispatcher(mq, 0))
 	pb.RegisterUserServiceServer(s, server)
 	go func() {
 		if err := s.Serve(lis); err != nil {
