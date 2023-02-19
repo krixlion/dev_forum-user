@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/krixlion/dev_forum-lib/env"
@@ -114,11 +113,11 @@ func getServiceDependencies() service.Dependencies {
 	broker := broker.NewBroker(messageQueue, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(broker, 20)
 
-	userServer := server.NewUserServer(storage, logger, dispatcher)
+	userServer := server.NewUserServer(storage, logger, tracer, dispatcher)
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 
-		grpc_middleware.WithUnaryServerChain(
+		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(zap.L()),
 			otelgrpc.UnaryServerInterceptor(),

@@ -13,6 +13,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+var _ Storage = (*DB)(nil)
+
 // DB is a wrapper for the read model and write model to use with Storage interface.
 type DB struct {
 	cmd    Eventstore

@@ -9,9 +9,8 @@ import (
 	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
-	"golang.org/x/crypto/bcrypt"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/gofrs/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,13 +20,15 @@ type UserServer struct {
 	pb.UnimplementedUserServiceServer
 	storage    storage.Storage
 	logger     logging.Logger
+	tracer     trace.Tracer
 	dispatcher *dispatcher.Dispatcher
 }
 
-func NewUserServer(storage storage.Storage, logger logging.Logger, dispatcher *dispatcher.Dispatcher) UserServer {
+func NewUserServer(storage storage.Storage, logger logging.Logger, tracer trace.Tracer, dispatcher *dispatcher.Dispatcher) UserServer {
 	return UserServer{
 		storage:    storage,
 		logger:     logger,
+		tracer:     tracer,
 		dispatcher: dispatcher,
 	}
 }
@@ -38,20 +39,6 @@ func (s UserServer) Close() error {
 
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	user := userFromPB(req.GetUser())
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-	// Assign new UUID to new user.
-	user.Id = id.String()
-	user.Password = string(hash)
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Time{}
 
 	if err := s.storage.Create(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -60,13 +47,14 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserCreated, user))
 
 	return &pb.CreateUserResponse{
-		Id: id.String(),
+		Id: user.Id,
 	}, nil
 }
 
 func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
 	id := req.GetId()
 
 	if err := s.storage.Delete(ctx, id); err != nil {

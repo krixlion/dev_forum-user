@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/krixlion/goqu/v9"
 	_ "github.com/krixlion/goqu/v9/dialect/postgres"
 	"go.nhat.io/otelsql"
@@ -14,6 +15,8 @@ import (
 )
 
 const Driver = "postgres"
+
+var _ storage.Storage = (*DB)(nil)
 
 func formatConnString(host, port, user, password, dbname string) string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)

@@ -32,11 +32,10 @@ func Test_Get(t *testing.T) {
 			desc: "Test if method is invoked",
 			args: args{
 				ctx: context.Background(),
-				id:  "",
 			},
 			want: entity.User{},
 			query: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, nil).Once()
 				return m
 			}(),
@@ -45,12 +44,11 @@ func Test_Get(t *testing.T) {
 			desc: "Test if method forwards an error",
 			args: args{
 				ctx: context.Background(),
-				id:  "",
 			},
 			want:    entity.User{},
 			wantErr: true,
 			query: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
@@ -96,7 +94,7 @@ func Test_GetMultiple(t *testing.T) {
 			},
 			want: []entity.User{},
 			query: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, nil).Once()
 				return m
 			}(),
@@ -111,7 +109,7 @@ func Test_GetMultiple(t *testing.T) {
 			want:    []entity.User{},
 			wantErr: true,
 			query: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
@@ -252,7 +250,6 @@ func Test_Delete(t *testing.T) {
 			desc: "Test if method is invoked",
 			args: args{
 				ctx: context.Background(),
-				id:  "",
 			},
 
 			cmd: func() mocks.Eventstore[entity.User] {
@@ -265,7 +262,6 @@ func Test_Delete(t *testing.T) {
 			desc: "Test if error is forwarded",
 			args: args{
 				ctx: context.Background(),
-				id:  "",
 			},
 			wantErr: true,
 			cmd: func() mocks.Eventstore[entity.User] {

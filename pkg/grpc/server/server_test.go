@@ -39,7 +39,7 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 	}
 
 	s := grpc.NewServer()
-	server := server.NewUserServer(db, nulls.NullLogger{}, dispatcher.NewDispatcher(mq, 0))
+	server := server.NewUserServer(db, nulls.NullLogger{}, nulls.NullTracer{}, dispatcher.NewDispatcher(mq, 0))
 	pb.RegisterUserServiceServer(s, server)
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -85,12 +85,12 @@ func Test_Get(t *testing.T) {
 				User: user,
 			},
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(v, nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -103,12 +103,12 @@ func Test_Get(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -168,12 +168,12 @@ func Test_Create(t *testing.T) {
 				Id: User.Id,
 			},
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -186,12 +186,12 @@ func Test_Create(t *testing.T) {
 			dontWant: nil,
 			wantErr:  true,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -219,10 +219,6 @@ func Test_Create(t *testing.T) {
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
 			if createResponse != tt.dontWant {
-				if cmp.Equal(createResponse.Id, tt.dontWant.Id) {
-					t.Errorf("User IDs was not reassigned:\n Got = %+v\n want = %+v\n", createResponse.Id, tt.dontWant.Id)
-					return
-				}
 				if _, err := uuid.FromString(createResponse.Id); err != nil {
 					t.Errorf("User ID is not correct UUID:\n ID = %+v\n err = %+v", createResponse.Id, err)
 					return
@@ -256,12 +252,12 @@ func Test_Update(t *testing.T) {
 			},
 			want: &pb.UpdateUserResponse{},
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -274,12 +270,12 @@ func Test_Update(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -339,12 +335,12 @@ func Test_Delete(t *testing.T) {
 			},
 			want: &pb.DeleteUserResponse{},
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -357,12 +353,12 @@ func Test_Delete(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -428,12 +424,12 @@ func Test_GetStream(t *testing.T) {
 			},
 			want: pbUsers,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(Users, nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
@@ -444,12 +440,12 @@ func Test_GetStream(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 			storage: func() mocks.Storage[entity.User] {
-				m := mocks.Storage[entity.User]{Mock: new(mock.Mock)}
+				m := mocks.NewStorage[entity.User]()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
-				m := mocks.Broker{Mock: new(mock.Mock)}
+				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),

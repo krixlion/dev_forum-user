@@ -8,9 +8,9 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/krixlion/dev_forum-lib v0.0.0-20230211145550-2c0a110ffb77
+	github.com/krixlion/dev_forum-lib v0.0.0-20230219165459-e7f304720e0a
 	github.com/krixlion/dev_forum-proto v0.0.0-20230125135445-2b61385445fd
-	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230211150331-a729c47bb00f
+	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230212211448-d0b71a52cf4b
 	github.com/krixlion/goqu/v9 v9.18.0
 	github.com/lib/pq v1.10.7
 	github.com/pressly/goose/v3 v3.9.0
@@ -58,9 +58,9 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/net v0.6.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
+	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
