@@ -15,9 +15,9 @@ import (
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-lib/tracing"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/service"
 	"github.com/krixlion/dev_forum-user/pkg/storage/db"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -113,7 +113,13 @@ func getServiceDependencies() service.Dependencies {
 	broker := broker.NewBroker(messageQueue, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(broker, 20)
 
-	userServer := server.NewUserServer(storage, logger, tracer, dispatcher)
+	userServer := server.NewUserServer(server.Dependencies{
+		Storage:    storage,
+		Logger:     logger,
+		Tracer:     tracer,
+		Dispatcher: dispatcher,
+	})
+
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 

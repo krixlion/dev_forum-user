@@ -1,73 +1,41 @@
-package server_test
+package server
 
 import (
 	"context"
 	"errors"
-	"log"
-	"net"
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
 	"github.com/krixlion/dev_forum-lib/nulls"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 )
 
-// setUpServerWithMiddleware initializes and runs in the background a gRPC
-// server allowing only for local calls for testing.
-// Returns a client to interact with the server.
-// The server is shutdown when ctx.Done() receives.
-func setUpServerWithMiddleware(ctx context.Context, db storage.Storage) pb.UserServiceClient {
-	// bufconn allows the server to call itself
-	// great for testing across whole infrastructure
-	lis := bufconn.Listen(1024 * 1024)
-	bufDialer := func(context.Context, string) (net.Conn, error) {
-		return lis.Dial()
-	}
-	mq := mocks.Broker{Mock: new(mock.Mock)}
-	server := server.NewUserServer(db, nulls.NullLogger{}, nulls.NullTracer{}, dispatcher.NewDispatcher(mq, 0))
+func setUpServerWithMiddleware(ctx context.Context, db storage.Storage, mq event.Broker) UserServer {
+	s := NewUserServer(Dependencies{
+		Storage:    db,
+		Logger:     nulls.NullLogger{},
+		Tracer:     nulls.NullTracer{},
+		Dispatcher: dispatcher.NewDispatcher(mq, 0),
+	})
 
-	s := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			server.ValidateRequestInterceptor(),
-		),
-	)
-
-	pb.RegisterUserServiceServer(s, server)
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited w mith error: %v", err)
-		}
-	}()
-
-	go func() {
-		<-ctx.Done()
-		s.Stop()
-	}()
-
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	client := pb.NewUserServiceClient(conn)
-	return client
+	return s
 }
 
 func Test_validateCreate(t *testing.T) {
 	tests := []struct {
 		name    string
+		handler mocks.UnaryHandler
 		storage mocks.Storage[entity.User]
+		broker  mocks.Broker
 		req     *pb.CreateUserRequest
 		want    *pb.CreateUserResponse
 		wantErr bool
@@ -76,6 +44,15 @@ func Test_validateCreate(t *testing.T) {
 			name: "Test if validation fails on invalid email",
 			storage: func() mocks.Storage[entity.User] {
 				m := mocks.NewStorage[entity.User]()
+				return m
+			}(),
+			handler: func() mocks.UnaryHandler {
+				m := mocks.NewUnaryHandler()
+				return m
+			}(),
+			broker: func() mocks.Broker {
+				m := mocks.NewBroker()
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
 			req: &pb.CreateUserRequest{
@@ -93,14 +70,15 @@ func Test_validateCreate(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage)
+			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
 
-			got, err := s.Create(ctx, tt.req)
+			got, err := s.validateCreate(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserServer.validateCreate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second), cmpopts.EquateEmpty()) {
+
+			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second), cmpopts.EquateEmpty()) && !tt.wantErr {
 				t.Errorf("UserServer.validateCreate():\n got = %v\n want = %v\n %v", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
@@ -110,15 +88,26 @@ func Test_validateCreate(t *testing.T) {
 func Test_validateUpdate(t *testing.T) {
 	tests := []struct {
 		name    string
+		handler mocks.UnaryHandler
 		storage mocks.Storage[entity.User]
+		broker  mocks.Broker
 		req     *pb.UpdateUserRequest
-		want    *pb.UpdateUserResponse
+		want    *empty.Empty
 		wantErr bool
 	}{
 		{
 			name: "Test if validation fails on invalid email",
 			storage: func() mocks.Storage[entity.User] {
 				m := mocks.NewStorage[entity.User]()
+				return m
+			}(),
+			handler: func() mocks.UnaryHandler {
+				m := mocks.NewUnaryHandler()
+				return m
+			}(),
+			broker: func() mocks.Broker {
+				m := mocks.NewBroker()
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
 			req: &pb.UpdateUserRequest{
@@ -136,14 +125,14 @@ func Test_validateUpdate(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage)
+			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
 
-			got, err := s.Update(ctx, tt.req)
+			got, err := s.validateUpdate(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserServer.validateUpdate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second), cmpopts.EquateEmpty()) {
+			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second), cmpopts.EquateEmpty()) && !tt.wantErr {
 				t.Errorf("UserServer.validateUpdate():\n got = %v\n want = %v\n %v", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
@@ -153,17 +142,29 @@ func Test_validateUpdate(t *testing.T) {
 func Test_validateDelete(t *testing.T) {
 	tests := []struct {
 		name    string
+		handler mocks.UnaryHandler
 		storage mocks.Storage[entity.User]
+		broker  mocks.Broker
 		req     *pb.DeleteUserRequest
 		wantErr bool
 	}{
 		{
 			name: "Test if returns OK regardless whether user exists or not",
+			broker: func() mocks.Broker {
+				m := mocks.NewBroker()
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
+				return m
+			}(),
+			handler: func() mocks.UnaryHandler {
+				m := mocks.NewUnaryHandler()
+				return m
+			}(),
 			storage: func() mocks.Storage[entity.User] {
 				m := mocks.NewStorage[entity.User]()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("not found")).Once()
 				return m
 			}(),
+
 			req: &pb.DeleteUserRequest{
 				Id: "id",
 			},
@@ -175,9 +176,9 @@ func Test_validateDelete(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage)
+			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
 
-			_, err := s.Delete(ctx, tt.req)
+			_, err := s.validateDelete(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserServer.validateDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/krixlion/dev_forum-lib/tracing"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -19,11 +19,11 @@ func (s UserServer) ValidateRequestInterceptor() grpc.UnaryServerInterceptor {
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		switch info.FullMethod {
-		case "/UserService/Create":
+		case "/user.UserService/Create":
 			return s.validateCreate(ctx, req.(*pb.CreateUserRequest), handler)
-		case "/UserService/Update":
+		case "/user.UserService/Update":
 			return s.validateUpdate(ctx, req.(*pb.UpdateUserRequest), handler)
-		case "/UserService/Delete":
+		case "/user.UserService/Delete":
 			return s.validateDelete(ctx, req.(*pb.DeleteUserRequest), handler)
 		default:
 			return handler(ctx, req)

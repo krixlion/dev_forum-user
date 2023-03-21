@@ -18,7 +18,7 @@ push-image: # param: version
 # ------------- Kubernetes -------------
 
 k8s-mount-project:
-	mkdir -p /mnt/wsl/k8s-mount/${AGGREGATE_ID} && sudo mount --bind . /mnt/wsl/k8s-mount/${AGGREGATE_ID}
+	mkdir -p /mnt/wsl/k8s-mount/${AGGREGATE_ID} && sudo mount --bind $(shell pwd) /mnt/wsl/k8s-mount/${AGGREGATE_ID}
 
 k8s-db-migrate-up:
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go run cmd/migrate/up/main.go

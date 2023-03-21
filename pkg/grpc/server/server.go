@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"go.opentelemetry.io/otel/trace"
 
@@ -24,12 +25,19 @@ type UserServer struct {
 	dispatcher *dispatcher.Dispatcher
 }
 
-func NewUserServer(storage storage.Storage, logger logging.Logger, tracer trace.Tracer, dispatcher *dispatcher.Dispatcher) UserServer {
+type Dependencies struct {
+	Storage    storage.Storage
+	Logger     logging.Logger
+	Tracer     trace.Tracer
+	Dispatcher *dispatcher.Dispatcher
+}
+
+func NewUserServer(d Dependencies) UserServer {
 	return UserServer{
-		storage:    storage,
-		logger:     logger,
-		tracer:     tracer,
-		dispatcher: dispatcher,
+		storage:    d.Storage,
+		logger:     d.Logger,
+		tracer:     d.Tracer,
+		dispatcher: d.Dispatcher,
 	}
 }
 
@@ -51,7 +59,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	}, nil
 }
 
-func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*empty.Empty, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
@@ -63,10 +71,10 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.
 
 	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
 
-	return &pb.DeleteUserResponse{}, nil
+	return &empty.Empty{}, nil
 }
 
-func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*empty.Empty, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
@@ -79,7 +87,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.
 
 	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
 
-	return &pb.UpdateUserResponse{}, nil
+	return &empty.Empty{}, nil
 }
 
 func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {

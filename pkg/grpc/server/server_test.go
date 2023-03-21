@@ -9,14 +9,15 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
 	"github.com/krixlion/dev_forum-lib/nulls"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +40,12 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 	}
 
 	s := grpc.NewServer()
-	server := server.NewUserServer(db, nulls.NullLogger{}, nulls.NullTracer{}, dispatcher.NewDispatcher(mq, 0))
+	server := server.NewUserServer(server.Dependencies{
+		Storage:    db,
+		Logger:     nulls.NullLogger{},
+		Tracer:     nulls.NullTracer{},
+		Dispatcher: dispatcher.NewDispatcher(mq, 0),
+	})
 	pb.RegisterUserServiceServer(s, server)
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -240,7 +246,7 @@ func Test_Update(t *testing.T) {
 	tests := []struct {
 		desc    string
 		arg     *pb.UpdateUserRequest
-		want    *pb.UpdateUserResponse
+		want    *empty.Empty
 		wantErr bool
 		storage mocks.Storage[entity.User]
 		broker  mocks.Broker
@@ -250,7 +256,7 @@ func Test_Update(t *testing.T) {
 			arg: &pb.UpdateUserRequest{
 				User: User,
 			},
-			want: &pb.UpdateUserResponse{},
+			want: &empty.Empty{},
 			storage: func() mocks.Storage[entity.User] {
 				m := mocks.NewStorage[entity.User]()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
@@ -302,7 +308,7 @@ func Test_Update(t *testing.T) {
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
 			if got != tt.want {
-				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.UpdateUserResponse{})) {
+				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(empty.Empty{})) {
 					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 					return
 				}
@@ -323,7 +329,7 @@ func Test_Delete(t *testing.T) {
 	tests := []struct {
 		desc    string
 		arg     *pb.DeleteUserRequest
-		want    *pb.DeleteUserResponse
+		want    *empty.Empty
 		wantErr bool
 		storage mocks.Storage[entity.User]
 		broker  mocks.Broker
@@ -333,7 +339,7 @@ func Test_Delete(t *testing.T) {
 			arg: &pb.DeleteUserRequest{
 				Id: User.Id,
 			},
-			want: &pb.DeleteUserResponse{},
+			want: &empty.Empty{},
 			storage: func() mocks.Storage[entity.User] {
 				m := mocks.NewStorage[entity.User]()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
@@ -384,7 +390,7 @@ func Test_Delete(t *testing.T) {
 			}
 			tt.storage.AssertNumberOfCalls(t, "Delete", 1)
 
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.DeleteUserResponse{})) {
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(empty.Empty{})) {
 				t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}

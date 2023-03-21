@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 )
 
 func userFromPB(v *pb.User) entity.User {

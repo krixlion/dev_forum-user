@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/krixlion/dev_forum-proto/user_service/pb"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
