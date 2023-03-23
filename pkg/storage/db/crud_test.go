@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/env"
+	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
@@ -38,13 +39,13 @@ func Test_Get(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		id      string
+		filter  string
 		want    entity.User
 		wantErr bool
 	}{
 		{
-			name: "Test on simple data",
-			id:   "test",
+			name:   "Test on simple data",
+			filter: "id[$eq]=test",
 			want: entity.User{
 				Id:        "test",
 				Name:      "testName",
@@ -62,7 +63,7 @@ func Test_Get(t *testing.T) {
 
 			db := setUpDB()
 
-			got, err := db.Get(ctx, tt.id)
+			got, err := db.Get(ctx, tt.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DB.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -108,6 +109,7 @@ func Test_GetMultiple(t *testing.T) {
 	type args struct {
 		offset string
 		limit  string
+		filter string
 	}
 	tests := []struct {
 		name    string
@@ -147,7 +149,7 @@ func Test_GetMultiple(t *testing.T) {
 
 			db := setUpDB()
 
-			got, err := db.GetMultiple(ctx, tt.args.offset, tt.args.limit)
+			got, err := db.GetMultiple(ctx, tt.args.offset, tt.args.limit, tt.args.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DB.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -192,7 +194,13 @@ func Test_Create(t *testing.T) {
 			}
 
 			want := tt.user
-			got, err := db.Get(ctx, want.Id)
+			filter := filter.Parameter{
+				Attribute: "id",
+				Operator:  filter.Equal,
+				Value:     want.Id,
+			}.ToFilter()
+
+			got, err := db.Get(ctx, filter)
 			if err != nil {
 				t.Errorf("Failed to DB.Get() after DB.Create() error = %v", err)
 				return
@@ -238,7 +246,13 @@ func Test_Update(t *testing.T) {
 			}
 
 			want := tt.user
-			got, err := db.Get(ctx, want.Id)
+			filter := filter.Parameter{
+				Attribute: "id",
+				Operator:  filter.Equal,
+				Value:     want.Id,
+			}.ToFilter()
+
+			got, err := db.Get(ctx, filter)
 			if err != nil {
 				t.Errorf("Failed to DB.Get() after DB.Update() error = %v", err)
 				return
@@ -279,9 +293,15 @@ func Test_Delete(t *testing.T) {
 				return
 			}
 
-			_, err := db.Get(ctx, tt.id)
+			filter := filter.Parameter{
+				Attribute: "id",
+				Operator:  filter.Equal,
+				Value:     tt.id,
+			}.ToFilter()
+
+			_, err := db.Get(ctx, filter)
 			if !errors.Is(err, sql.ErrNoRows) {
-				t.Errorf("DB.Create():\n gotErr = %T, wantErr = %T, err = %v", err, sql.ErrNoRows, err)
+				t.Errorf("DB.Delete():\n gotErr = %T, wantErr = %T, err = %v", err, sql.ErrNoRows, err)
 				return
 			}
 		})

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
@@ -20,7 +19,9 @@ import (
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
+	"github.com/krixlion/dev_forum-user/pkg/storage/dbmocks"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -79,7 +80,7 @@ func Test_Get(t *testing.T) {
 		arg     *pb.GetUserRequest
 		want    *pb.GetUserResponse
 		wantErr bool
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 	}{
 		{
@@ -90,8 +91,8 @@ func Test_Get(t *testing.T) {
 			want: &pb.GetUserResponse{
 				User: user,
 			},
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(v, nil).Once()
 				return m
 			}(),
@@ -108,8 +109,8 @@ func Test_Get(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: true,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
@@ -162,7 +163,7 @@ func Test_Create(t *testing.T) {
 		arg      *pb.CreateUserRequest
 		dontWant *pb.CreateUserResponse
 		wantErr  bool
-		storage  mocks.Storage[entity.User]
+		storage  dbmocks.Storage
 		broker   mocks.Broker
 	}{
 		{
@@ -173,8 +174,8 @@ func Test_Create(t *testing.T) {
 			dontWant: &pb.CreateUserResponse{
 				Id: User.Id,
 			},
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
@@ -191,8 +192,8 @@ func Test_Create(t *testing.T) {
 			},
 			dontWant: nil,
 			wantErr:  true,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
@@ -246,9 +247,9 @@ func Test_Update(t *testing.T) {
 	tests := []struct {
 		desc    string
 		arg     *pb.UpdateUserRequest
-		want    *empty.Empty
+		want    *emptypb.Empty
 		wantErr bool
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 	}{
 		{
@@ -256,9 +257,9 @@ func Test_Update(t *testing.T) {
 			arg: &pb.UpdateUserRequest{
 				User: User,
 			},
-			want: &empty.Empty{},
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			want: &emptypb.Empty{},
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
 				return m
 			}(),
@@ -275,8 +276,8 @@ func Test_Update(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: true,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
 				return m
 			}(),
@@ -308,7 +309,7 @@ func Test_Update(t *testing.T) {
 			// Equals false if both are nil or they point to the same memory address
 			// so be sure to use seperate structs when providing args in order to prevent SEGV.
 			if got != tt.want {
-				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(empty.Empty{})) {
+				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(emptypb.Empty{})) {
 					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 					return
 				}
@@ -329,9 +330,9 @@ func Test_Delete(t *testing.T) {
 	tests := []struct {
 		desc    string
 		arg     *pb.DeleteUserRequest
-		want    *empty.Empty
+		want    *emptypb.Empty
 		wantErr bool
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 	}{
 		{
@@ -339,9 +340,9 @@ func Test_Delete(t *testing.T) {
 			arg: &pb.DeleteUserRequest{
 				Id: User.Id,
 			},
-			want: &empty.Empty{},
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			want: &emptypb.Empty{},
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
 				return m
 			}(),
@@ -358,8 +359,8 @@ func Test_Delete(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: true,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(errors.New("test err")).Once()
 				return m
 			}(),
@@ -390,7 +391,7 @@ func Test_Delete(t *testing.T) {
 			}
 			tt.storage.AssertNumberOfCalls(t, "Delete", 1)
 
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(empty.Empty{})) {
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(emptypb.Empty{})) {
 				t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
 				return
 			}
@@ -419,7 +420,7 @@ func Test_GetStream(t *testing.T) {
 		arg     *pb.GetUsersRequest
 		want    []*pb.User
 		wantErr bool
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 	}{
 		{
@@ -429,8 +430,8 @@ func Test_GetStream(t *testing.T) {
 				Limit:  "5",
 			},
 			want: pbUsers,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(Users, nil).Once()
 				return m
 			}(),
@@ -445,8 +446,8 @@ func Test_GetStream(t *testing.T) {
 			arg:     &pb.GetUsersRequest{},
 			want:    nil,
 			wantErr: true,
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),

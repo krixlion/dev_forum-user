@@ -8,23 +8,27 @@ import (
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/goqu/v9"
-	"github.com/krixlion/goqu/v9/exp"
 )
 
 const usersTable = "users"
 
-func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
+func (db DB) Get(ctx context.Context, filter string) (entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.Get")
 	defer span.End()
 
-	query, args, err := db.queryBuilder.From(usersTable).Where(exp.Ex{usersTable + ".id": id}).Prepared(true).ToSQL()
+	exps, err := parseFilter(filter)
+	if err != nil {
+		return entity.User{}, err
+	}
+
+	filter, args, err := db.queryBuilder.From(usersTable).Where(exps...).Prepared(true).ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return entity.User{}, err
 	}
 
 	var dataset sqlUser
-	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
+	if err := db.conn.GetContext(ctx, &dataset, filter, args...); err != nil {
 		return entity.User{}, err
 	}
 
@@ -36,7 +40,7 @@ func (db DB) Get(ctx context.Context, id string) (entity.User, error) {
 	return user, nil
 }
 
-func (db DB) GetMultiple(ctx context.Context, offset string, limit string) ([]entity.User, error) {
+func (db DB) GetMultiple(ctx context.Context, offset, limit, filter string) ([]entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 

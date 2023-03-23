@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/event"
@@ -15,8 +14,11 @@ import (
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
+	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
+	"github.com/krixlion/dev_forum-user/pkg/storage/dbmocks"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func setUpServerWithMiddleware(ctx context.Context, db storage.Storage, mq event.Broker) UserServer {
@@ -34,7 +36,7 @@ func Test_validateCreate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 		req     *pb.CreateUserRequest
 		want    *pb.CreateUserResponse
@@ -42,8 +44,8 @@ func Test_validateCreate(t *testing.T) {
 	}{
 		{
 			name: "Test if validation fails on invalid email",
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -60,6 +62,31 @@ func Test_validateCreate(t *testing.T) {
 					Id:    "Id",
 					Name:  "Name",
 					Email: "invalid email",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test if validation fails on password shorter than 8 chars",
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
+				return m
+			}(),
+			handler: func() mocks.UnaryHandler {
+				m := mocks.NewUnaryHandler()
+				return m
+			}(),
+			broker: func() mocks.Broker {
+				m := mocks.NewBroker()
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
+				return m
+			}(),
+			req: &pb.CreateUserRequest{
+				User: &pb.User{
+					Id:       "Id",
+					Name:     "Name",
+					Email:    "invalid email",
+					Password: "1234567",
 				},
 			},
 			wantErr: true,
@@ -89,16 +116,16 @@ func Test_validateUpdate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 		req     *pb.UpdateUserRequest
-		want    *empty.Empty
+		want    *emptypb.Empty
 		wantErr bool
 	}{
 		{
 			name: "Test if validation fails on invalid email",
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -115,6 +142,31 @@ func Test_validateUpdate(t *testing.T) {
 					Id:    "Id",
 					Name:  "Name",
 					Email: "Invalid email",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Test if validation fails on password shorter than 8 chars",
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
+				return m
+			}(),
+			handler: func() mocks.UnaryHandler {
+				m := mocks.NewUnaryHandler()
+				return m
+			}(),
+			broker: func() mocks.Broker {
+				m := mocks.NewBroker()
+				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
+				return m
+			}(),
+			req: &pb.UpdateUserRequest{
+				User: &pb.User{
+					Id:       "Id",
+					Name:     "Name",
+					Email:    "invalid email",
+					Password: "1234567",
 				},
 			},
 			wantErr: true,
@@ -143,7 +195,7 @@ func Test_validateDelete(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage mocks.Storage[entity.User]
+		storage dbmocks.Storage
 		broker  mocks.Broker
 		req     *pb.DeleteUserRequest
 		wantErr bool
@@ -159,14 +211,14 @@ func Test_validateDelete(t *testing.T) {
 				m := mocks.NewUnaryHandler()
 				return m
 			}(),
-			storage: func() mocks.Storage[entity.User] {
-				m := mocks.NewStorage[entity.User]()
+			storage: func() dbmocks.Storage {
+				m := dbmocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("not found")).Once()
 				return m
 			}(),
 
 			req: &pb.DeleteUserRequest{
-				Id: "id",
+				Id: gentest.RandomString(10),
 			},
 			wantErr: false,
 		},

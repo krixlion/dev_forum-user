@@ -3,10 +3,10 @@ package mocks
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var _ pb.UserServiceClient = (*UserClient)(nil)
@@ -26,14 +26,14 @@ func (m UserClient) Create(ctx context.Context, in *pb.CreateUserRequest, opts .
 	return args.Get(0).(*pb.CreateUserResponse), args.Error(1)
 }
 
-func (m UserClient) Update(ctx context.Context, in *pb.UpdateUserRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (m UserClient) Update(ctx context.Context, in *pb.UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	args := m.Called(ctx, in, opts)
-	return args.Get(0).(*empty.Empty), args.Error(1)
+	return args.Get(0).(*emptypb.Empty), args.Error(1)
 }
 
-func (m UserClient) Delete(ctx context.Context, in *pb.DeleteUserRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (m UserClient) Delete(ctx context.Context, in *pb.DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	args := m.Called(ctx, in, opts)
-	return args.Get(0).(*empty.Empty), args.Error(1)
+	return args.Get(0).(*emptypb.Empty), args.Error(1)
 }
 
 func (m UserClient) Get(ctx context.Context, in *pb.GetUserRequest, opts ...grpc.CallOption) (*pb.GetUserResponse, error) {

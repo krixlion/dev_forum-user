@@ -32,7 +32,7 @@ func (s UserServer) ValidateRequestInterceptor() grpc.UnaryServerInterceptor {
 }
 
 func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserRequest, handler grpc.UnaryHandler) (interface{}, error) {
-	ctx, span := s.tracer.Start(ctx, "validate")
+	ctx, span := s.tracer.Start(ctx, "server.validateCreate")
 	defer span.End()
 
 	user := req.GetUser()
@@ -58,13 +58,11 @@ func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserReques
 		return nil, err
 	}
 
-	if user.GetPassword() != "" {
-		// Password has to be at least 8 characters long.
-		if len(user.GetPassword()) < 8 {
-			err := status.Error(codes.FailedPrecondition, "Provided password is too short")
-			tracing.SetSpanErr(span, err)
-			return nil, err
-		}
+	// Password has to be at least 8 characters long.
+	if len(user.GetPassword()) < 8 {
+		err := status.Error(codes.FailedPrecondition, "Provided password is too short")
+		tracing.SetSpanErr(span, err)
+		return nil, err
 	}
 
 	// Hash password before saving.
@@ -82,7 +80,7 @@ func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserReques
 }
 
 func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserRequest, handler grpc.UnaryHandler) (interface{}, error) {
-	ctx, span := s.tracer.Start(ctx, "validate")
+	ctx, span := s.tracer.Start(ctx, "server.validateUpdate")
 	defer span.End()
 
 	user := req.GetUser()
@@ -109,6 +107,7 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
+
 	user.CreatedAt = timestamppb.New(time.Now())
 	user.UpdatedAt = timestamppb.New(time.Time{})
 
@@ -116,7 +115,7 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 }
 
 func (s UserServer) validateDelete(ctx context.Context, req *pb.DeleteUserRequest, handler grpc.UnaryHandler) (interface{}, error) {
-	ctx, span := s.tracer.Start(ctx, "validate")
+	ctx, span := s.tracer.Start(ctx, "server.validateDelete")
 	defer span.End()
 
 	id := req.GetId()
@@ -129,7 +128,7 @@ func (s UserServer) validateDelete(ctx context.Context, req *pb.DeleteUserReques
 
 	if _, err := s.storage.Get(ctx, id); err != nil {
 		tracing.SetSpanErr(span, err)
-		// Do not let user whether entity with provided ID existed before deleting or not.
+		// Do not let user know whether entity with provided ID existed before deleting or not.
 		return nil, nil
 	}
 

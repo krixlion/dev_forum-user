@@ -20,8 +20,8 @@ type Storage interface {
 
 type Getter interface {
 	io.Closer
-	Get(ctx context.Context, id string) (entity.User, error)
-	GetMultiple(ctx context.Context, offset, limit string) ([]entity.User, error)
+	Get(ctx context.Context, filter string) (entity.User, error)
+	GetMultiple(ctx context.Context, offset, limit, filter string) ([]entity.User, error)
 }
 
 type Writer interface {

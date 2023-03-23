@@ -4,16 +4,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
-	"go.opentelemetry.io/otel/trace"
 
+	fmask "github.com/mennanov/fieldmask-utils"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -59,7 +60,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	}, nil
 }
 
-func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*empty.Empty, error) {
+func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
@@ -71,12 +72,21 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 
 	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*empty.Empty, error) {
+func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emptypb.Empty, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
+	mask, err := fmask.MaskFromPaths(req.GetFieldMask().GetPaths(), mapUserFields)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	if err := fmask.StructToStruct(mask, req.GetUser(), req.User); err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
 	user := userFromPB(req.GetUser())
 	user.UpdatedAt = time.Now()
@@ -87,7 +97,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 
 	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
 
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
@@ -111,9 +121,22 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	user, err := s.storage.Get(ctx, req.GetId())
+	var filter string
+
+	switch req.GetQuery().(type) {
+	case *pb.GetUserSecretRequest_Email:
+		filter = "email[$eq]=" + req.GetEmail()
+	case *pb.GetUserSecretRequest_Id:
+		filter = "id[$eq]=" + req.GetId()
+	}
+
+	user, err := s.storage.Get(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.GetUserSecretResponse{
@@ -132,7 +155,7 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 	ctx, cancel := context.WithTimeout(stream.Context(), time.Second*10)
 	defer cancel()
 
-	users, err := s.storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit())
+	users, err := s.storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit(), req.GetFilter())
 	if err != nil {
 		return err
 	}

@@ -111,7 +111,6 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| secret | [string](#string) |  | Access token - only auth service should be able to query this endpoint. |
 | id | [string](#string) |  |  |
 | email | [string](#string) |  |  |
 
@@ -145,6 +144,7 @@
 | ----- | ---- | ----- | ----------- |
 | offset | [string](#string) |  |  |
 | limit | [string](#string) |  |  |
+| filter | [string](#string) |  |  |
 
 
 
@@ -160,6 +160,7 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [User](#user-User) |  |  |
+| field_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
 
 
 
