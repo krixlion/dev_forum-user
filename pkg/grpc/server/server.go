@@ -6,6 +6,7 @@ import (
 
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
+	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/logging"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
@@ -104,7 +105,13 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	user, err := s.storage.Get(ctx, req.GetId())
+	filter := filter.Parameter{
+		Attribute: "id",
+		Operator:  filter.Equal,
+		Value:     req.GetId(),
+	}.ToFilter()
+
+	user, err := s.storage.Get(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
