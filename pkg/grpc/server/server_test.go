@@ -50,7 +50,7 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 	pb.RegisterUserServiceServer(s, server)
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited w mith error: %v", err)
+			log.Fatalf("Server exited with an error: %v", err)
 		}
 	}()
 
@@ -223,8 +223,8 @@ func Test_Create(t *testing.T) {
 
 			tt.storage.AssertNumberOfCalls(t, "Create", 1)
 
-			// Equals false if both are nil or they point to the same memory address
-			// so be sure to use seperate structs when providing args in order to prevent SEGV.
+			// Equals false if both are nil or point to the same memory address
+			// so be sure to use seperate variables when providing args in order to prevent SEGV.
 			if createResponse != tt.dontWant {
 				if _, err := uuid.FromString(createResponse.Id); err != nil {
 					t.Errorf("User ID is not correct UUID:\n ID = %+v\n err = %+v", createResponse.Id, err)
