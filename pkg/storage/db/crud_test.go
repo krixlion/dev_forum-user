@@ -33,7 +33,7 @@ func setUpDB() db.DB {
 	return storage
 }
 
-func Test_Get(t *testing.T) {
+func TestDB_Get(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration db.Get test.")
 	}
@@ -76,7 +76,7 @@ func Test_Get(t *testing.T) {
 	}
 }
 
-func Test_GetMultiple(t *testing.T) {
+func TestDB_GetMultiple(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping db.GetMultiple integration test.")
 	}
@@ -162,7 +162,7 @@ func Test_GetMultiple(t *testing.T) {
 	}
 }
 
-func Test_Create(t *testing.T) {
+func TestDB_Create(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping db.Create integration test.")
 	}
@@ -214,7 +214,7 @@ func Test_Create(t *testing.T) {
 	}
 }
 
-func Test_Update(t *testing.T) {
+func TestDB_Update(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping db.Update integration test.")
 	}
@@ -266,7 +266,7 @@ func Test_Update(t *testing.T) {
 	}
 }
 
-func Test_Delete(t *testing.T) {
+func TestDB_Delete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping db.Delete integration test.")
 	}

@@ -68,7 +68,7 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 	return client
 }
 
-func Test_Get(t *testing.T) {
+func TestUserServer_Get(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
 	user := &pb.User{
 		Id:   v.Id,
@@ -149,7 +149,7 @@ func Test_Get(t *testing.T) {
 	}
 }
 
-func Test_Create(t *testing.T) {
+func TestUserServer_Create(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
 	User := &pb.User{
 		Id:       v.Id,
@@ -235,7 +235,7 @@ func Test_Create(t *testing.T) {
 	}
 }
 
-func Test_Update(t *testing.T) {
+func TestUserServer_Update(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
 	User := &pb.User{
 		Id:       v.Id,
@@ -318,7 +318,7 @@ func Test_Update(t *testing.T) {
 	}
 }
 
-func Test_Delete(t *testing.T) {
+func TestUserServer_Delete(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
 	User := &pb.User{
 		Id:       v.Id,
@@ -399,7 +399,7 @@ func Test_Delete(t *testing.T) {
 	}
 }
 
-func Test_GetStream(t *testing.T) {
+func TestUserServer_GetStream(t *testing.T) {
 	var Users []entity.User
 	for i := 0; i < 5; i++ {
 		User := gentest.RandomUser(2, 5, 5)

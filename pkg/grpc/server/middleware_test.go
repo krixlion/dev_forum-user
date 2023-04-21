@@ -32,7 +32,7 @@ func setUpStubServer(db storage.Storage, mq event.Broker) UserServer {
 	return s
 }
 
-func Test_validateCreate(t *testing.T) {
+func TestUserServer_validateCreate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
@@ -112,7 +112,7 @@ func Test_validateCreate(t *testing.T) {
 	}
 }
 
-func Test_validateUpdate(t *testing.T) {
+func TestUserServer_validateUpdate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
@@ -191,7 +191,7 @@ func Test_validateUpdate(t *testing.T) {
 	}
 }
 
-func Test_validateDelete(t *testing.T) {
+func TestUserServer_validateDelete(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
