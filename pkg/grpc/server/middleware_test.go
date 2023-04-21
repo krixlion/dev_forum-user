@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func setUpServerWithMiddleware(ctx context.Context, db storage.Storage, mq event.Broker) UserServer {
+func setUpStubServer(db storage.Storage, mq event.Broker) UserServer {
 	s := NewUserServer(Dependencies{
 		Storage:    db,
 		Logger:     nulls.NullLogger{},
@@ -97,7 +97,7 @@ func Test_validateCreate(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
+			s := setUpStubServer(tt.storage, tt.broker)
 
 			got, err := s.validateCreate(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
@@ -177,7 +177,7 @@ func Test_validateUpdate(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
+			s := setUpStubServer(tt.storage, tt.broker)
 
 			got, err := s.validateUpdate(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
@@ -228,7 +228,7 @@ func Test_validateDelete(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpServerWithMiddleware(ctx, tt.storage, tt.broker)
+			s := setUpStubServer(tt.storage, tt.broker)
 
 			_, err := s.validateDelete(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
