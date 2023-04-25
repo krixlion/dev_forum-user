@@ -10,6 +10,7 @@ import (
 
 var ErrTagNotFound error = errors.New("tag not found")
 
+// filterToSqlExp converts filter.Filter into goqu.Expression to use with goqu SQL builder.
 func filterToSqlExp(params filter.Filter) ([]exp.Expression, error) {
 	expressions := make([]exp.Expression, 0, len(params))
 	for _, param := range params {
@@ -30,6 +31,7 @@ func filterToSqlExp(params filter.Filter) ([]exp.Expression, error) {
 	return expressions, nil
 }
 
+// matchOperator returns a goqu operator corresponding to the filter.Operator specs.
 func matchOperator(operator filter.Operator) (string, error) {
 	switch operator {
 	case filter.Equal:
@@ -49,6 +51,8 @@ func matchOperator(operator filter.Operator) (string, error) {
 	}
 }
 
+// isValidField check whether provided field name is one of dataset's fields
+// based on associated tags.
 func isValidField(input string) error {
 	datasetType := reflect.TypeOf(sqlUser{})
 
