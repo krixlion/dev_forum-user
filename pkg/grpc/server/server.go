@@ -54,7 +54,14 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserCreated, user))
+	event, err := event.MakeEvent(event.UserAggregate, event.UserCreated, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	if err := s.dispatcher.ResilientPublish(event); err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
 	return &pb.CreateUserResponse{
 		Id: user.Id,
@@ -71,7 +78,14 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserDeleted, id))
+	event, err := event.MakeEvent(event.UserAggregate, event.UserDeleted, id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	if err := s.dispatcher.ResilientPublish(event); err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
 	return &emptypb.Empty{}, nil
 }
@@ -96,8 +110,14 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	s.dispatcher.Publish(event.MakeEvent(event.UserAggregate, event.UserUpdated, user))
+	event, err := event.MakeEvent(event.UserAggregate, event.UserUpdated, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
+	if err := s.dispatcher.ResilientPublish(event); err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -109,9 +129,9 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 		Attribute: "id",
 		Operator:  filter.Equal,
 		Value:     req.GetId(),
-	}.ToFilter()
+	}
 
-	user, err := s.storage.Get(ctx, filter)
+	user, err := s.storage.Get(ctx, filter.String())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}

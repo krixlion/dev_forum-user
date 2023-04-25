@@ -3,42 +3,34 @@ package db
 import (
 	"errors"
 	"reflect"
-	"strings"
 
 	"github.com/krixlion/dev_forum-lib/filter"
-	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/goqu/v9/exp"
 )
 
 var ErrTagNotFound error = errors.New("tag not found")
 
-func parseFilter(input string) ([]exp.Expression, error) {
-	params, err := filter.Parse(input)
-	if err != nil {
-		return nil, err
-	}
-
-	expressions := []exp.Expression{}
+func filterToSqlExp(params filter.Filter) ([]exp.Expression, error) {
+	expressions := make([]exp.Expression, 0, len(params))
 	for _, param := range params {
-		operator, err := parseOperator(param.Operator)
+		operator, err := matchOperator(param.Operator)
 		if err != nil {
 			return nil, err
 		}
 
-		field, err := findField(param.Attribute)
-		if err != nil {
+		if err := isValidField(param.Attribute); err != nil {
 			return nil, err
 		}
 
 		expressions = append(expressions, exp.Ex{
-			usersTable + "." + field: exp.Op{operator: param.Value},
+			usersTable + "." + param.Attribute: exp.Op{operator: param.Value},
 		})
 	}
 
 	return expressions, nil
 }
 
-func parseOperator(operator filter.Operator) (string, error) {
+func matchOperator(operator filter.Operator) (string, error) {
 	switch operator {
 	case filter.Equal:
 		return "eq", nil
@@ -57,30 +49,20 @@ func parseOperator(operator filter.Operator) (string, error) {
 	}
 }
 
-func findField(input string) (string, error) {
-	entityValue := reflect.TypeOf(entity.User{})
-	datasetValue := reflect.TypeOf(sqlUser{})
+func isValidField(input string) error {
+	datasetType := reflect.TypeOf(sqlUser{})
 
-	for i := 0; i < entityValue.NumField(); i++ {
-		entityField := entityValue.Field(i)
-		tag, _, _ := strings.Cut(entityField.Tag.Get("json"), ",")
-
-		if tag != input {
-			continue
-		}
-
-		datasetField, ok := datasetValue.FieldByName(entityField.Name)
+	for i := 0; i < datasetType.NumField(); i++ {
+		field := datasetType.Field(i)
+		tag, ok := field.Tag.Lookup("db")
 		if !ok {
-			return "", ErrTagNotFound
+			return ErrTagNotFound
 		}
 
-		datasetTag, ok := datasetField.Tag.Lookup("db")
-		if !ok {
-			return "", ErrTagNotFound
+		if tag == input {
+			return nil
 		}
-
-		return datasetTag, nil
 	}
 
-	return "", ErrTagNotFound
+	return ErrTagNotFound
 }

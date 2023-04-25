@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
+	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/goqu/v9"
@@ -12,23 +13,28 @@ import (
 
 const usersTable = "users"
 
-func (db DB) Get(ctx context.Context, filter string) (entity.User, error) {
+func (db DB) Get(ctx context.Context, query string) (entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.Get")
 	defer span.End()
 
-	exps, err := parseFilter(filter)
+	params, err := filter.Parse(query)
 	if err != nil {
 		return entity.User{}, err
 	}
 
-	filter, args, err := db.queryBuilder.From(usersTable).Where(exps...).Prepared(true).ToSQL()
+	exps, err := filterToSqlExp(params)
+	if err != nil {
+		return entity.User{}, err
+	}
+
+	query, args, err := db.queryBuilder.From(usersTable).Where(exps...).Prepared(true).ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return entity.User{}, err
 	}
 
 	var dataset sqlUser
-	if err := db.conn.GetContext(ctx, &dataset, filter, args...); err != nil {
+	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
 		return entity.User{}, err
 	}
 
@@ -40,7 +46,7 @@ func (db DB) Get(ctx context.Context, filter string) (entity.User, error) {
 	return user, nil
 }
 
-func (db DB) GetMultiple(ctx context.Context, offset, limit, filter string) ([]entity.User, error) {
+func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) ([]entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
@@ -64,7 +70,17 @@ func (db DB) GetMultiple(ctx context.Context, offset, limit, filter string) ([]e
 		}
 	}
 
-	query, args, err := db.queryBuilder.From(usersTable).Limit(uint(l)).Offset(uint(o)).Prepared(true).ToSQL()
+	params, err := filter.Parse(filterStr)
+	if err != nil {
+		return nil, err
+	}
+
+	exps, err := filterToSqlExp(params)
+	if err != nil {
+		return nil, err
+	}
+
+	query, args, err := db.queryBuilder.From(usersTable).Limit(uint(l)).Offset(uint(o)).Where(exps...).Prepared(true).ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err

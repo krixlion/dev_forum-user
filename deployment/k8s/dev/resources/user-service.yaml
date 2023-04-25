@@ -59,14 +59,14 @@ spec:
             - name: TESTING
               value: "false"
             - name: TEST_PATH
-              value: github.com/krixlion/dev_forum-user/pkg/event/dispatcher
+              value: github.com/krixlion/dev_forum-user/pkg/storage/db
             - name: BUILD_ARGS
               value: -race cmd/main.go
             - name: DEBUG_PORT
               value: "2345"
             - name: RUN_ARGS
               value: -p 50051
-          image: 'krixlion/go-reflex-dlv:1.19.3'
+          image: 'krixlion/go-reflex-dlv:1.20.3'
           name: debug
           ports:
             - name: grpc

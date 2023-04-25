@@ -16,7 +16,7 @@ import (
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
-	"github.com/krixlion/dev_forum-user/pkg/storage/dbmocks"
+	"github.com/krixlion/dev_forum-user/pkg/storage/storagemocks"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -36,7 +36,7 @@ func TestUserServer_validateCreate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage dbmocks.Storage
+		storage storagemocks.Storage
 		broker  mocks.Broker
 		req     *pb.CreateUserRequest
 		want    *pb.CreateUserResponse
@@ -44,8 +44,8 @@ func TestUserServer_validateCreate(t *testing.T) {
 	}{
 		{
 			name: "Test if validation fails on invalid email",
-			storage: func() dbmocks.Storage {
-				m := dbmocks.NewStorage()
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -68,8 +68,8 @@ func TestUserServer_validateCreate(t *testing.T) {
 		},
 		{
 			name: "Test if validation fails on password shorter than 8 chars",
-			storage: func() dbmocks.Storage {
-				m := dbmocks.NewStorage()
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -116,7 +116,7 @@ func TestUserServer_validateUpdate(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage dbmocks.Storage
+		storage storagemocks.Storage
 		broker  mocks.Broker
 		req     *pb.UpdateUserRequest
 		want    *emptypb.Empty
@@ -124,8 +124,8 @@ func TestUserServer_validateUpdate(t *testing.T) {
 	}{
 		{
 			name: "Test if validation fails on invalid email",
-			storage: func() dbmocks.Storage {
-				m := dbmocks.NewStorage()
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -148,8 +148,8 @@ func TestUserServer_validateUpdate(t *testing.T) {
 		},
 		{
 			name: "Test if validation fails on password shorter than 8 chars",
-			storage: func() dbmocks.Storage {
-				m := dbmocks.NewStorage()
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
 				return m
 			}(),
 			handler: func() mocks.UnaryHandler {
@@ -195,7 +195,7 @@ func TestUserServer_validateDelete(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler mocks.UnaryHandler
-		storage dbmocks.Storage
+		storage storagemocks.Storage
 		broker  mocks.Broker
 		req     *pb.DeleteUserRequest
 		wantErr bool
@@ -211,8 +211,8 @@ func TestUserServer_validateDelete(t *testing.T) {
 				m := mocks.NewUnaryHandler()
 				return m
 			}(),
-			storage: func() dbmocks.Storage {
-				m := dbmocks.NewStorage()
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("not found")).Once()
 				return m
 			}(),

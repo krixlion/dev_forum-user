@@ -198,7 +198,7 @@ func TestDB_Create(t *testing.T) {
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     want.Id,
-			}.ToFilter()
+			}.String()
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
@@ -250,7 +250,7 @@ func TestDB_Update(t *testing.T) {
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     want.Id,
-			}.ToFilter()
+			}.String()
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
@@ -297,7 +297,7 @@ func TestDB_Delete(t *testing.T) {
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     tt.id,
-			}.ToFilter()
+			}.String()
 
 			_, err := db.Get(ctx, filter)
 			if !errors.Is(err, sql.ErrNoRows) {

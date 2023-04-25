@@ -1,4 +1,4 @@
-package dbmocks
+package storagemocks
 
 import (
 	"context"
