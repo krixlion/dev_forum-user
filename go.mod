@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/krixlion/dev_forum-lib v0.0.0-20230425134625-5d6a852230b0
+	github.com/krixlion/dev_forum-lib v0.0.0-20230425144246-8d4fcd2126a7
 	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230321225335-aacfca540fbc
 	github.com/krixlion/goqu/v9 v9.18.0
 	github.com/lib/pq v1.10.8
