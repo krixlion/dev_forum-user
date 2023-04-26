@@ -19,7 +19,7 @@ func filterToSqlExp(params filter.Filter) ([]exp.Expression, error) {
 			return nil, err
 		}
 
-		if err := isValidField(param.Attribute); err != nil {
+		if err := verifyField(param.Attribute); err != nil {
 			return nil, err
 		}
 
@@ -51,9 +51,9 @@ func matchOperator(operator filter.Operator) (string, error) {
 	}
 }
 
-// isValidField check whether provided field name is one of dataset's fields
+// verifyField check whether provided field name is one of dataset's fields
 // based on associated tags.
-func isValidField(input string) error {
+func verifyField(input string) error {
 	datasetType := reflect.TypeOf(sqlUser{})
 
 	for i := 0; i < datasetType.NumField(); i++ {

@@ -47,9 +47,9 @@ func (v sqlUser) User() (entity.User, error) {
 	}, nil
 }
 
-func usersFromDatasets(vs []sqlUser) ([]entity.User, error) {
-	users := []entity.User{}
-	for _, v := range vs {
+func usersFromDatasets(datasets []sqlUser) ([]entity.User, error) {
+	users := make([]entity.User, 0, len(datasets))
+	for _, v := range datasets {
 		user, err := v.User()
 		if err != nil {
 			return nil, err

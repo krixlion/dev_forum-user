@@ -2,7 +2,7 @@ package db
 
 import "testing"
 
-func Test_findField(t *testing.T) {
+func Test_verifyField(t *testing.T) {
 	type args struct {
 		input string
 	}
@@ -34,8 +34,8 @@ func Test_findField(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := isValidField(tt.args.input); (err != nil) != tt.wantErr {
-				t.Errorf("findField() set: %d\n error = %v, wantErr %v", i, err, tt.wantErr)
+			if err := verifyField(tt.args.input); (err != nil) != tt.wantErr {
+				t.Errorf("verifyField() set: %d\n error = %v, wantErr %v", i, err, tt.wantErr)
 			}
 		})
 	}
