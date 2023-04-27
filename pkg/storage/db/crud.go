@@ -50,33 +50,27 @@ func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) (
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
-	var o uint64
-	var l uint64
-	var err error
-
-	if offset != "" {
-		o, err = strconv.ParseUint(offset, 10, 32)
-		if err != nil {
-			tracing.SetSpanErr(span, err)
-			return nil, err
-		}
+	o, err := convertToUint(offset)
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return nil, err
 	}
 
-	if limit != "" {
-		l, err = strconv.ParseUint(limit, 10, 32)
-		if err != nil {
-			tracing.SetSpanErr(span, err)
-			return nil, err
-		}
+	l, err := convertToUint(limit)
+	if err != nil {
+		tracing.SetSpanErr(span, err)
+		return nil, err
 	}
 
 	params, err := filter.Parse(filterStr)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
 	exps, err := filterToSqlExp(params)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
@@ -87,16 +81,14 @@ func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) (
 	}
 
 	datasets := []sqlUser{}
-	err = crdb.Execute(func() error {
-		return db.conn.SelectContext(ctx, &datasets, query, args...)
-	})
-	if err != nil {
+	if err := crdb.Execute(func() error { return db.conn.SelectContext(ctx, &datasets, query, args...) }); err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
 	users, err := usersFromDatasets(datasets)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
@@ -168,4 +160,17 @@ func (db DB) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	return nil
+}
+
+func convertToUint(str string) (uint, error) {
+	if str == "" {
+		return 0, nil
+	}
+
+	num, err := strconv.ParseUint(str, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint(num), nil
 }

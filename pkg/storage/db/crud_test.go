@@ -1,4 +1,4 @@
-package db_test
+package db
 
 import (
 	"context"
@@ -15,10 +15,9 @@ import (
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
-	"github.com/krixlion/dev_forum-user/pkg/storage/db"
 )
 
-func setUpDB() db.DB {
+func setUpDB() DB {
 	env.Load("app")
 
 	db_port := os.Getenv("DB_PORT")
@@ -26,7 +25,7 @@ func setUpDB() db.DB {
 	db_user := os.Getenv("DB_USER")
 	db_pass := os.Getenv("DB_PASS")
 	db_name := os.Getenv("DB_NAME")
-	storage, err := db.Make(db_host, db_port, db_user, db_pass, db_name, nulls.NullTracer{})
+	storage, err := Make(db_host, db_port, db_user, db_pass, db_name, nulls.NullTracer{})
 	if err != nil {
 		panic(err)
 	}
@@ -303,6 +302,52 @@ func TestDB_Delete(t *testing.T) {
 			if !errors.Is(err, sql.ErrNoRows) {
 				t.Errorf("DB.Delete():\n gotErr = %T, wantErr = %T, err = %v", err, sql.ErrNoRows, err)
 				return
+			}
+		})
+	}
+}
+
+func Test_convertToUint(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    uint
+		wantErr bool
+	}{
+		{
+			name: "Test if empty string returns 0",
+			args: args{
+				str: "",
+			},
+			want: 0,
+		},
+		{
+			name: "Test if works on a simple int value",
+			args: args{
+				str: "53",
+			},
+			want: 53,
+		},
+		{
+			name: "Test if fails on float values",
+			args: args{
+				str: "55.5",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := convertToUint(tt.args.str)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("convertToUint() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("convertToUint() = %v, want %v", got, tt.want)
 			}
 		})
 	}
