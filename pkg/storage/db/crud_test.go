@@ -13,8 +13,8 @@ import (
 	"github.com/krixlion/dev_forum-lib/env"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/nulls"
+	"github.com/krixlion/dev_forum-user/internal/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/dev_forum-user/pkg/helpers/gentest"
 )
 
 func setUpDB() DB {
