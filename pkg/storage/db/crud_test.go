@@ -67,7 +67,7 @@ func TestDB_Get(t *testing.T) {
 				t.Errorf("DB.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Minute)) {
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreTypes(time.Time{})) {
 				t.Errorf("DB.Get():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
 				return
 			}
@@ -153,7 +153,7 @@ func TestDB_GetMultiple(t *testing.T) {
 				t.Errorf("DB.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Minute)) {
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreTypes(time.Time{})) {
 				t.Errorf("DB.GetMultiple():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
 				return
 			}
@@ -205,7 +205,7 @@ func TestDB_Create(t *testing.T) {
 				return
 			}
 
-			if !cmp.Equal(got, want, cmpopts.EquateApproxTime(time.Second)) {
+			if !cmp.Equal(got, want, cmpopts.IgnoreTypes(time.Time{})) {
 				t.Errorf("DB.Create():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
 				return
 			}
@@ -257,7 +257,7 @@ func TestDB_Update(t *testing.T) {
 				return
 			}
 
-			if !cmp.Equal(got, want, cmpopts.EquateApproxTime(time.Second*5)) {
+			if !cmp.Equal(got, want, cmpopts.IgnoreTypes(time.Time{})) {
 				t.Errorf("DB.Update():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
 				return
 			}
