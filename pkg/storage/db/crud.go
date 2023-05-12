@@ -2,10 +2,10 @@ package db
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
 	"github.com/krixlion/dev_forum-lib/filter"
+	"github.com/krixlion/dev_forum-lib/str"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/goqu/v9"
@@ -50,13 +50,13 @@ func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) (
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
-	o, err := convertToUint(offset)
+	o, err := str.ConvertToUint(offset)
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
-	l, err := convertToUint(limit)
+	l, err := str.ConvertToUint(limit)
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err
@@ -160,17 +160,4 @@ func (db DB) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	return nil
-}
-
-func convertToUint(str string) (uint, error) {
-	if str == "" {
-		return 0, nil
-	}
-
-	num, err := strconv.ParseUint(str, 10, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return uint(num), nil
 }
