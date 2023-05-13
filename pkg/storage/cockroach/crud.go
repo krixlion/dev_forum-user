@@ -9,6 +9,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"github.com/krixlion/goqu/v9"
+	"github.com/krixlion/goqu/v9/exp"
 )
 
 const usersTable = "users"
@@ -33,7 +34,7 @@ func (db CockroachDB) Get(ctx context.Context, query string) (entity.User, error
 		return entity.User{}, err
 	}
 
-	var dataset sqlUser
+	var dataset userDataset
 	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
 		return entity.User{}, err
 	}
@@ -74,13 +75,16 @@ func (db CockroachDB) GetMultiple(ctx context.Context, offset, limit, filterStr 
 		return nil, err
 	}
 
-	query, args, err := db.queryBuilder.From(usersTable).Limit(uint(l)).Offset(uint(o)).Where(exps...).Prepared(true).ToSQL()
+	colExp := exp.NewColumnListExpression("name")
+	orderExp := exp.NewOrderedExpression(colExp, exp.DescSortDir, exp.NullsLastSortType)
+	mainExp := db.queryBuilder.From(usersTable).Order(orderExp).Limit(uint(l)).Offset(uint(o)).Where(exps...).Prepared(true)
+	query, args, err := mainExp.ToSQL()
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
-	datasets := []sqlUser{}
+	datasets := []userDataset{}
 	if err := crdb.Execute(func() error { return db.conn.SelectContext(ctx, &datasets, query, args...) }); err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err

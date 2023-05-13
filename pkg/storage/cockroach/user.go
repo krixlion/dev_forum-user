@@ -6,7 +6,7 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
-type sqlUser struct {
+type userDataset struct {
 	Id        string `db:"id" goqu:"skipupdate,omitempty"`
 	Name      string `db:"name" goqu:"omitempty"`
 	Email     string `db:"email" goqu:"omitempty"`
@@ -15,8 +15,8 @@ type sqlUser struct {
 	UpdatedAt string `db:"updated_at" goqu:"omitempty"`
 }
 
-func datasetFromUser(v entity.User) sqlUser {
-	return sqlUser{
+func datasetFromUser(v entity.User) userDataset {
+	return userDataset{
 		Id:        v.Id,
 		Name:      v.Name,
 		Password:  v.Password,
@@ -26,7 +26,7 @@ func datasetFromUser(v entity.User) sqlUser {
 	}
 }
 
-func (v sqlUser) User() (entity.User, error) {
+func (v userDataset) User() (entity.User, error) {
 	createdAt, err := time.Parse(time.RFC3339, v.CreatedAt)
 	if err != nil {
 		return entity.User{}, err
@@ -47,7 +47,7 @@ func (v sqlUser) User() (entity.User, error) {
 	}, nil
 }
 
-func usersFromDatasets(datasets []sqlUser) ([]entity.User, error) {
+func usersFromDatasets(datasets []userDataset) ([]entity.User, error) {
 	users := make([]entity.User, 0, len(datasets))
 	for _, v := range datasets {
 		user, err := v.User()

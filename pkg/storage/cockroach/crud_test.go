@@ -15,6 +15,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/internal/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach/testdata"
 )
 
 func setUpDB() CockroachDB {
@@ -29,6 +30,11 @@ func setUpDB() CockroachDB {
 	if err != nil {
 		panic(err)
 	}
+
+	if err := testdata.Seed(); err != nil {
+		panic(err)
+	}
+
 	return storage
 }
 
@@ -44,15 +50,8 @@ func TestDB_Get(t *testing.T) {
 	}{
 		{
 			name:   "Test on simple data",
-			filter: "id[$eq]=test",
-			want: entity.User{
-				Id:        "test",
-				Name:      "testName",
-				Email:     "test@test.test",
-				Password:  "testPass",
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
+			filter: "id[$eq]=1",
+			want:   testdata.Users["1"],
 		},
 	}
 	for _, tt := range tests {
@@ -80,31 +79,6 @@ func TestDB_GetMultiple(t *testing.T) {
 		t.Skip("Skipping db.GetMultiple integration test.")
 	}
 
-	user1 := entity.User{
-		Id:        "1",
-		Name:      "name-1",
-		Email:     "email-1",
-		Password:  "pass-1",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	user2 := entity.User{
-		Id:        "2",
-		Name:      "name-2",
-		Email:     "email-2",
-		Password:  "pass-2",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	user3 := entity.User{
-		Id:        "3",
-		Name:      "name-3",
-		Email:     "email-3",
-		Password:  "pass-3",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
 	type args struct {
 		offset string
 		limit  string
@@ -119,10 +93,13 @@ func TestDB_GetMultiple(t *testing.T) {
 		{
 			name: "Test on simple data",
 			args: args{
-				offset: "0",
-				limit:  "3",
+				limit: "3",
 			},
-			want: []entity.User{user1, user2, user3},
+			want: []entity.User{
+				testdata.Users["3"],
+				testdata.Users["2"],
+				testdata.Users["1"],
+			},
 		},
 		{
 			name: "Test if correctly applies offset on simple data",
@@ -130,15 +107,20 @@ func TestDB_GetMultiple(t *testing.T) {
 				offset: "1",
 				limit:  "2",
 			},
-			want: []entity.User{user2, user3},
+			want: []entity.User{
+				testdata.Users["2"],
+				testdata.Users["1"],
+			},
 		},
 		{
 			name: "Test if correctly applies limit",
 			args: args{
-				offset: "0",
-				limit:  "2",
+				limit: "2",
 			},
-			want: []entity.User{user1, user2},
+			want: []entity.User{
+				testdata.Users["3"],
+				testdata.Users["2"],
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -153,7 +135,7 @@ func TestDB_GetMultiple(t *testing.T) {
 				t.Errorf("DB.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreTypes(time.Time{})) {
+			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Minute)) {
 				t.Errorf("DB.GetMultiple():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
 				return
 			}
@@ -205,7 +187,7 @@ func TestDB_Create(t *testing.T) {
 				return
 			}
 
-			if !cmp.Equal(got, want, cmpopts.IgnoreTypes(time.Time{})) {
+			if !cmp.Equal(got, want, cmpopts.EquateApproxTime(time.Minute)) {
 				t.Errorf("DB.Create():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
 				return
 			}
@@ -226,7 +208,7 @@ func TestDB_Update(t *testing.T) {
 			name: "Test if correctly updates a user",
 			user: func() entity.User {
 				user := gentest.RandomUser(2, 2, 2)
-				user.Id = "test"
+				user.Id = "1"
 				return user
 			}(),
 			wantErr: false,

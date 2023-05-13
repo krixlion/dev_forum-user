@@ -54,7 +54,7 @@ func matchOperator(operator filter.Operator) (string, error) {
 // verifyField check whether provided field name is one of dataset's fields
 // based on associated tags.
 func verifyField(input string) error {
-	datasetType := reflect.TypeOf(sqlUser{})
+	datasetType := reflect.TypeOf(userDataset{})
 
 	for i := 0; i < datasetType.NumField(); i++ {
 		field := datasetType.Field(i)

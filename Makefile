@@ -29,13 +29,10 @@ k8s-db-migrate-up:
 k8s-db-migrate-down:
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go run cmd/migrate/down/main.go
 
-k8s-db-seed:
-	$(kubernetes) exec -it cockroachdb-cluster-0 -- cockroach sql --insecure --execute="$(sql)"
-
 k8s-unit-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -short -race ${args} ./...  
 
-k8s-integration-test: k8s-db-seed # param: args
+k8s-integration-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -race ${args} ./...  
 
 k8s-test-gen-coverage:

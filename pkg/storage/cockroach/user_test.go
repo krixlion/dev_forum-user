@@ -13,7 +13,7 @@ func Test_datasetFromUser(t *testing.T) {
 	tests := []struct {
 		name string
 		arg  entity.User
-		want sqlUser
+		want userDataset
 	}{
 		{
 			name: "Test on simple user",
@@ -25,7 +25,7 @@ func Test_datasetFromUser(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			want: sqlUser{
+			want: userDataset{
 				Id:        "test",
 				Name:      "testname",
 				Email:     "test@test.test",
@@ -47,13 +47,13 @@ func Test_datasetFromUser(t *testing.T) {
 func Test_userFromDataset(t *testing.T) {
 	tests := []struct {
 		name    string
-		arg     sqlUser
+		arg     userDataset
 		want    entity.User
 		wantErr bool
 	}{
 		{
 			name: "Test on simple user",
-			arg: sqlUser{
+			arg: userDataset{
 				Id:        "test",
 				Name:      "testname",
 				Email:     "test@test.test",
@@ -73,7 +73,7 @@ func Test_userFromDataset(t *testing.T) {
 		},
 		{
 			name: "Test if returns an error on invalid time",
-			arg: sqlUser{
+			arg: userDataset{
 				Id:        "test",
 				Name:      "testname",
 				Email:     "test@test.test",
@@ -101,7 +101,7 @@ func Test_userFromDataset(t *testing.T) {
 func Test_usersFromDatasets(t *testing.T) {
 	tests := []struct {
 		name    string
-		arg     []sqlUser
+		arg     []userDataset
 		want    []entity.User
 		wantErr bool
 	}{
@@ -116,7 +116,7 @@ func Test_usersFromDatasets(t *testing.T) {
 					UpdatedAt: time.Now(),
 				},
 			},
-			arg: []sqlUser{
+			arg: []userDataset{
 				{
 					Id:        "test",
 					Name:      "testname",
