@@ -19,7 +19,7 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/service"
-	"github.com/krixlion/dev_forum-user/pkg/storage/db"
+	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
@@ -80,7 +80,7 @@ func getServiceDependencies() service.Dependencies {
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
-	storage, err := db.Make(dbHost, dbPort, dbUser, dbPass, dbName, tracer)
+	storage, err := cockroach.Make(dbHost, dbPort, dbUser, dbPass, dbName, tracer)
 	if err != nil {
 		panic(err)
 	}
@@ -111,11 +111,12 @@ func getServiceDependencies() service.Dependencies {
 		rabbitmq.WithTracer(tracer),
 	)
 	broker := broker.NewBroker(messageQueue, logger, tracer)
-	dispatcher := dispatcher.NewDispatcher(broker, 20)
+	dispatcher := dispatcher.NewDispatcher(20)
 
 	userServer := server.NewUserServer(server.Dependencies{
 		Storage:    storage,
 		Logger:     logger,
+		Broker:     broker,
 		Tracer:     tracer,
 		Dispatcher: dispatcher,
 	})

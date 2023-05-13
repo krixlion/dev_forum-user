@@ -21,12 +21,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func setUpStubServer(db storage.Storage, mq event.Broker) UserServer {
+func setUpStubServer(db storage.Storage, broker event.Broker) UserServer {
 	s := NewUserServer(Dependencies{
 		Storage:    db,
 		Logger:     nulls.NullLogger{},
+		Broker:     broker,
 		Tracer:     nulls.NullTracer{},
-		Dispatcher: dispatcher.NewDispatcher(mq, 0),
+		Dispatcher: dispatcher.NewDispatcher(0),
 	})
 
 	return s

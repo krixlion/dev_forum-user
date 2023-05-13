@@ -1,4 +1,4 @@
-package db
+package cockroach
 
 import (
 	"database/sql"
@@ -16,23 +16,23 @@ import (
 
 const Driver = "postgres"
 
-var _ storage.Storage = (*DB)(nil)
+var _ storage.Storage = (*CockroachDB)(nil)
 
 func formatConnString(host, port, user, password, dbname string) string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
 }
 
-type DB struct {
+type CockroachDB struct {
 	conn         *sqlx.DB
 	queryBuilder goqu.DialectWrapper
 	tracer       trace.Tracer
 }
 
-func (db DB) Conn() *sql.DB {
+func (db CockroachDB) Conn() *sql.DB {
 	return db.conn.DB
 }
 
-func Make(host, port, user, password, dbname string, tracer trace.Tracer) (DB, error) {
+func Make(host, port, user, password, dbName string, tracer trace.Tracer) (CockroachDB, error) {
 	driverName, err := otelsql.Register(Driver,
 		otelsql.AllowRoot(),
 		otelsql.TraceQueryWithoutArgs(),
@@ -41,22 +41,22 @@ func Make(host, port, user, password, dbname string, tracer trace.Tracer) (DB, e
 		otelsql.TracePing(),
 	)
 	if err != nil {
-		return DB{}, err
+		return CockroachDB{}, err
 	}
 
-	db, err := sql.Open(driverName, formatConnString(host, port, user, password, dbname))
+	db, err := sql.Open(driverName, formatConnString(host, port, user, password, dbName))
 	if err != nil {
-		return DB{}, err
+		return CockroachDB{}, err
 	}
 	queryBuilder := goqu.Dialect(Driver)
 
-	return DB{
+	return CockroachDB{
 		conn:         sqlx.NewDb(db, Driver),
 		queryBuilder: queryBuilder,
 		tracer:       tracer,
 	}, nil
 }
 
-func (db DB) Close() error {
+func (db CockroachDB) Close() error {
 	return db.conn.Close()
 }

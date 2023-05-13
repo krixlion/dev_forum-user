@@ -1,4 +1,4 @@
-package db
+package cockroach
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
-func setUpDB() DB {
+func setUpDB() CockroachDB {
 	env.Load("app")
 
 	db_port := os.Getenv("DB_PORT")

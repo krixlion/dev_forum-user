@@ -32,7 +32,7 @@ import (
 // server allowing only for local calls for testing.
 // Returns a client to interact with the server.
 // The server is shutdown when ctx.Done() receives.
-func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.UserServiceClient {
+func setUpServer(ctx context.Context, db storage.Storage, broker mocks.Broker) pb.UserServiceClient {
 	// bufconn allows the server to call itself
 	// great for testing across whole infrastructure
 	lis := bufconn.Listen(1024 * 1024)
@@ -45,7 +45,8 @@ func setUpServer(ctx context.Context, db storage.Storage, mq mocks.Broker) pb.Us
 		Storage:    db,
 		Logger:     nulls.NullLogger{},
 		Tracer:     nulls.NullTracer{},
-		Dispatcher: dispatcher.NewDispatcher(mq, 0),
+		Broker:     broker,
+		Dispatcher: dispatcher.NewDispatcher(0),
 	})
 	pb.RegisterUserServiceServer(s, server)
 	go func() {

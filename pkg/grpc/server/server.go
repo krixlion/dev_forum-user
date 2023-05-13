@@ -22,24 +22,27 @@ import (
 type UserServer struct {
 	pb.UnimplementedUserServiceServer
 	storage    storage.Storage
+	dispatcher *dispatcher.Dispatcher
+	broker     event.Broker
 	logger     logging.Logger
 	tracer     trace.Tracer
-	dispatcher *dispatcher.Dispatcher
 }
 
 type Dependencies struct {
 	Storage    storage.Storage
+	Broker     event.Broker
+	Dispatcher *dispatcher.Dispatcher
 	Logger     logging.Logger
 	Tracer     trace.Tracer
-	Dispatcher *dispatcher.Dispatcher
 }
 
 func NewUserServer(d Dependencies) UserServer {
 	return UserServer{
 		storage:    d.Storage,
-		logger:     d.Logger,
-		tracer:     d.Tracer,
+		broker:     d.Broker,
 		dispatcher: d.Dispatcher,
+		tracer:     d.Tracer,
+		logger:     d.Logger,
 	}
 }
 
@@ -59,7 +62,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	if err := s.dispatcher.ResilientPublish(event); err != nil {
+	if err := s.broker.ResilientPublish(event); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -83,7 +86,7 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	if err := s.dispatcher.ResilientPublish(event); err != nil {
+	if err := s.broker.ResilientPublish(event); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -115,7 +118,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	if err := s.dispatcher.ResilientPublish(event); err != nil {
+	if err := s.broker.ResilientPublish(event); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return &emptypb.Empty{}, nil

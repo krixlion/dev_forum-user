@@ -1,4 +1,4 @@
-package db
+package cockroach
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 
 const usersTable = "users"
 
-func (db DB) Get(ctx context.Context, query string) (entity.User, error) {
+func (db CockroachDB) Get(ctx context.Context, query string) (entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.Get")
 	defer span.End()
 
@@ -46,7 +46,7 @@ func (db DB) Get(ctx context.Context, query string) (entity.User, error) {
 	return user, nil
 }
 
-func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) ([]entity.User, error) {
+func (db CockroachDB) GetMultiple(ctx context.Context, offset, limit, filterStr string) ([]entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
@@ -95,7 +95,7 @@ func (db DB) GetMultiple(ctx context.Context, offset, limit, filterStr string) (
 	return users, nil
 }
 
-func (db DB) Create(ctx context.Context, user entity.User) error {
+func (db CockroachDB) Create(ctx context.Context, user entity.User) error {
 	ctx, span := db.tracer.Start(ctx, "db.Create")
 	defer span.End()
 
@@ -118,7 +118,7 @@ func (db DB) Create(ctx context.Context, user entity.User) error {
 	return nil
 }
 
-func (db DB) Update(ctx context.Context, user entity.User) error {
+func (db CockroachDB) Update(ctx context.Context, user entity.User) error {
 	ctx, span := db.tracer.Start(ctx, "db.Update")
 	defer span.End()
 
@@ -141,7 +141,7 @@ func (db DB) Update(ctx context.Context, user entity.User) error {
 	return nil
 }
 
-func (db DB) Delete(ctx context.Context, id string) error {
+func (db CockroachDB) Delete(ctx context.Context, id string) error {
 	ctx, span := db.tracer.Start(ctx, "db.Delete")
 	defer span.End()
 
