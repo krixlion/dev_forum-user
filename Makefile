@@ -4,7 +4,6 @@ export $(shell sed 's/=.*//' .env)
 
 kubernetes = kubectl -n dev
 docker-compose = docker compose -f docker-compose.dev.yml --env-file .env
-sql := $(shell cat test/seed.sql)
 
 mod-init:
 	go mod init	github.com/krixlion/$(PROJECT_NAME)-$(AGGREGATE_ID)
