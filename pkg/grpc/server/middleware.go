@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"html"
 	"net/mail"
 	"time"
 
@@ -51,6 +52,7 @@ func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserReques
 		return nil, err
 	}
 	user.Id = id.String()
+	user.Name = html.EscapeString(user.GetName())
 
 	// Validate email.
 	if _, err := mail.ParseAddress(user.Email); err != nil {
@@ -93,7 +95,9 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 
 	// Sanitize user input.
 	user.Id = ""
+	user.Name = html.EscapeString(user.GetName())
 	user.CreatedAt = timestamppb.New(time.Time{})
+	user.UpdatedAt = timestamppb.New(time.Now())
 
 	// Validate email.
 	if _, err := mail.ParseAddress(user.GetEmail()); err != nil {
@@ -107,9 +111,6 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
-
-	user.CreatedAt = timestamppb.New(time.Now())
-	user.UpdatedAt = timestamppb.New(time.Time{})
 
 	return handler(ctx, req)
 }
