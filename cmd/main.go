@@ -113,7 +113,7 @@ func getServiceDependencies() service.Dependencies {
 	broker := broker.NewBroker(messageQueue, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(20)
 
-	userServer := server.NewUserServer(server.Dependencies{
+	userServer := server.MakeUserServer(server.Dependencies{
 		Storage:    storage,
 		Logger:     logger,
 		Broker:     broker,

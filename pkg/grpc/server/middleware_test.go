@@ -22,7 +22,7 @@ import (
 )
 
 func setUpStubServer(db storage.Storage, broker event.Broker) UserServer {
-	s := NewUserServer(Dependencies{
+	s := MakeUserServer(Dependencies{
 		Storage:    db,
 		Logger:     nulls.NullLogger{},
 		Broker:     broker,

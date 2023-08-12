@@ -36,7 +36,7 @@ type Dependencies struct {
 	Tracer     trace.Tracer
 }
 
-func NewUserServer(d Dependencies) UserServer {
+func MakeUserServer(d Dependencies) UserServer {
 	return UserServer{
 		storage:    d.Storage,
 		broker:     d.Broker,

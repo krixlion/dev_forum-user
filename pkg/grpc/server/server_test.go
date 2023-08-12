@@ -41,7 +41,7 @@ func setUpServer(ctx context.Context, db storage.Storage, broker mocks.Broker) p
 	}
 
 	s := grpc.NewServer()
-	server := server.NewUserServer(server.Dependencies{
+	server := server.MakeUserServer(server.Dependencies{
 		Storage:    db,
 		Logger:     nulls.NullLogger{},
 		Tracer:     nulls.NullTracer{},
