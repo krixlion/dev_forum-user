@@ -14,6 +14,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/event/broker"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
+	"github.com/krixlion/dev_forum-lib/tls"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
@@ -121,7 +122,15 @@ func getServiceDependencies() service.Dependencies {
 		Dispatcher: dispatcher,
 	})
 
+	tlsCertPath := os.Getenv("TLS_CERT_PATH")
+	tlsKeyPath := os.Getenv("TLS_KEY_PATH")
+	credentials, err := tls.LoadServerCredentials(tlsCertPath, tlsKeyPath)
+	if err != nil {
+		panic(err)
+	}
+
 	grpcServer := grpc.NewServer(
+		grpc.Creds(credentials),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 
 		grpc.ChainUnaryInterceptor(
