@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/env"
@@ -23,7 +22,6 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -143,7 +141,6 @@ func getServiceDependencies() service.Dependencies {
 
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
-			grpc_zap.UnaryServerInterceptor(zap.L()),
 			otelgrpc.UnaryServerInterceptor(),
 			userServer.ValidateRequestInterceptor(),
 		),
