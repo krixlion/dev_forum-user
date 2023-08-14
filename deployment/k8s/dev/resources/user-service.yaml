@@ -144,17 +144,6 @@ spec:
               values:
                 - docker-desktop
 ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  namespace: dev
-  name: local-storage
-  labels:
-    app: user
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Retain
----
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
