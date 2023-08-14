@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/filter"
@@ -150,6 +151,10 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest) (*pb.GetUserSecretResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
+	if err := cert.VerifyClientTLS(ctx, "auth-service"); err != nil {
+		return nil, err
+	}
 
 	var filter string
 

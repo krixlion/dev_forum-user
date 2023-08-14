@@ -17,7 +17,6 @@ import (
 )
 
 func (s UserServer) ValidateRequestInterceptor() grpc.UnaryServerInterceptor {
-
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		switch info.FullMethod {
 		case "/user.UserService/Create":

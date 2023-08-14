@@ -10,11 +10,11 @@ import (
 
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/env"
 	"github.com/krixlion/dev_forum-lib/event/broker"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/logging"
-	"github.com/krixlion/dev_forum-lib/tls"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	rabbitmq "github.com/krixlion/dev_forum-rabbitmq"
 	"github.com/krixlion/dev_forum-user/pkg/grpc/server"
@@ -122,15 +122,23 @@ func getServiceDependencies() service.Dependencies {
 		Dispatcher: dispatcher,
 	})
 
-	tlsCertPath := os.Getenv("TLS_CERT_PATH")
-	tlsKeyPath := os.Getenv("TLS_KEY_PATH")
-	credentials, err := tls.LoadServerCredentials(tlsCertPath, tlsKeyPath)
+	caCertPath := os.Getenv("TLS_CA_PATH")
+	caCertPool, err := cert.LoadCaPool(caCertPath)
 	if err != nil {
 		panic(err)
 	}
 
+	tlsCertPath := os.Getenv("TLS_CERT_PATH")
+	tlsKeyPath := os.Getenv("TLS_KEY_PATH")
+	serverCert, err := cert.LoadX509KeyPair(tlsCertPath, tlsKeyPath)
+	if err != nil {
+		panic(err)
+	}
+
+	creds := cert.NewServerOptionalMTLSCreds(caCertPool, serverCert)
+
 	grpcServer := grpc.NewServer(
-		grpc.Creds(credentials),
+		grpc.Creds(creds),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 
 		grpc.ChainUnaryInterceptor(
