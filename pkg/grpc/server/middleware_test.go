@@ -214,7 +214,7 @@ func TestUserServer_validateDelete(t *testing.T) {
 			}(),
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("not found")).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, errors.New("not found")).Once()
 				return m
 			}(),
 

@@ -129,13 +129,13 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	filter := filter.Parameter{
+	query := filter.Filter{{
 		Attribute: "id",
 		Operator:  filter.Equal,
 		Value:     req.GetId(),
-	}
+	}}
 
-	user, err := s.storage.Get(ctx, filter.String())
+	user, err := s.storage.Get(ctx, query)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
@@ -156,22 +156,26 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 		return nil, err
 	}
 
-	var filter string
+	query := filter.Filter{}
 
 	switch req.GetQuery().(type) {
 	case *pb.GetUserSecretRequest_Email:
-		filter = "email[$eq]=" + req.GetEmail()
+		query = append(query, filter.Parameter{
+			Attribute: "email",
+			Operator:  filter.Equal,
+			Value:     req.GetEmail(),
+		})
 	case *pb.GetUserSecretRequest_Id:
-		filter = "id[$eq]=" + req.GetId()
+		query = append(query, filter.Parameter{
+			Attribute: "id",
+			Operator:  filter.Equal,
+			Value:     req.GetId(),
+		})
 	}
 
-	user, err := s.storage.Get(ctx, filter)
+	user, err := s.storage.Get(ctx, query)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	return &pb.GetUserSecretResponse{
@@ -190,7 +194,12 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 	ctx, cancel := context.WithTimeout(stream.Context(), time.Second*10)
 	defer cancel()
 
-	users, err := s.storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit(), req.GetFilter())
+	query, err := filter.Parse(req.GetFilter())
+	if err != nil {
+		return err
+	}
+
+	users, err := s.storage.GetMultiple(ctx, req.GetOffset(), req.GetLimit(), query)
 	if err != nil {
 		return err
 	}

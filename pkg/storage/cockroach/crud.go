@@ -14,14 +14,9 @@ import (
 
 const usersTable = "users"
 
-func (db CockroachDB) Get(ctx context.Context, query string) (entity.User, error) {
+func (db CockroachDB) Get(ctx context.Context, params filter.Filter) (entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.Get")
 	defer span.End()
-
-	params, err := filter.Parse(query)
-	if err != nil {
-		return entity.User{}, err
-	}
 
 	exps, err := filterToSqlExp(params)
 	if err != nil {
@@ -47,7 +42,7 @@ func (db CockroachDB) Get(ctx context.Context, query string) (entity.User, error
 	return user, nil
 }
 
-func (db CockroachDB) GetMultiple(ctx context.Context, offset, limit, filterStr string) ([]entity.User, error) {
+func (db CockroachDB) GetMultiple(ctx context.Context, offset, limit string, params filter.Filter) ([]entity.User, error) {
 	ctx, span := db.tracer.Start(ctx, "db.GetMultiple")
 	defer span.End()
 
@@ -58,12 +53,6 @@ func (db CockroachDB) GetMultiple(ctx context.Context, offset, limit, filterStr 
 	}
 
 	l, err := str.ConvertToUint(limit)
-	if err != nil {
-		tracing.SetSpanErr(span, err)
-		return nil, err
-	}
-
-	params, err := filter.Parse(filterStr)
 	if err != nil {
 		tracing.SetSpanErr(span, err)
 		return nil, err

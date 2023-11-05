@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/krixlion/dev_forum-lib/event"
+	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
@@ -20,8 +21,8 @@ type Storage interface {
 
 type Getter interface {
 	io.Closer
-	Get(ctx context.Context, filter string) (entity.User, error)
-	GetMultiple(ctx context.Context, offset, limit, filter string) ([]entity.User, error)
+	Get(ctx context.Context, filter filter.Filter) (entity.User, error)
+	GetMultiple(ctx context.Context, offset, limit string, filter filter.Filter) ([]entity.User, error)
 }
 
 type Writer interface {

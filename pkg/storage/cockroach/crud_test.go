@@ -44,14 +44,18 @@ func TestDB_Get(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		filter  string
+		filter  filter.Filter
 		want    entity.User
 		wantErr bool
 	}{
 		{
-			name:   "Test on simple data",
-			filter: "id[$eq]=1",
-			want:   testdata.Users["1"],
+			name: "Test on simple data",
+			filter: filter.Filter{{
+				Attribute: "id",
+				Operator:  filter.Equal,
+				Value:     "1",
+			}},
+			want: testdata.Users["1"],
 		},
 	}
 	for _, tt := range tests {
@@ -82,7 +86,7 @@ func TestDB_GetMultiple(t *testing.T) {
 	type args struct {
 		offset string
 		limit  string
-		filter string
+		filter filter.Filter
 	}
 	tests := []struct {
 		name    string
@@ -175,11 +179,11 @@ func TestDB_Create(t *testing.T) {
 			}
 
 			want := tt.user
-			filter := filter.Parameter{
+			filter := filter.Filter{{
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     want.Id,
-			}.String()
+			}}
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
@@ -227,11 +231,11 @@ func TestDB_Update(t *testing.T) {
 			}
 
 			want := tt.user
-			filter := filter.Parameter{
+			filter := filter.Filter{{
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     want.Id,
-			}.String()
+			}}
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
@@ -274,11 +278,11 @@ func TestDB_Delete(t *testing.T) {
 				return
 			}
 
-			filter := filter.Parameter{
+			filter := filter.Filter{{
 				Attribute: "id",
 				Operator:  filter.Equal,
 				Value:     tt.id,
-			}.String()
+			}}
 
 			_, err := db.Get(ctx, filter)
 			if !errors.Is(err, sql.ErrNoRows) {

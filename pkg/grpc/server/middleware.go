@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"golang.org/x/crypto/bcrypt"
@@ -126,7 +127,13 @@ func (s UserServer) validateDelete(ctx context.Context, req *pb.DeleteUserReques
 		return nil, err
 	}
 
-	if _, err := s.storage.Get(ctx, id); err != nil {
+	query := filter.Filter{{
+		Attribute: "id",
+		Operator:  filter.Equal,
+		Value:     id,
+	}}
+
+	if _, err := s.storage.Get(ctx, query); err != nil {
 		tracing.SetSpanErr(span, err)
 		// Do not let user know whether entity with provided ID existed before deleting or not.
 		return nil, nil

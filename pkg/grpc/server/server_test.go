@@ -94,7 +94,7 @@ func TestUserServer_Get(t *testing.T) {
 			},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(v, nil).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(v, nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
@@ -112,7 +112,7 @@ func TestUserServer_Get(t *testing.T) {
 			wantErr: true,
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("Get", mock.Anything, mock.AnythingOfType("string")).Return(entity.User{}, errors.New("test err")).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
@@ -433,7 +433,7 @@ func TestUserServer_GetStream(t *testing.T) {
 			want: pbUsers,
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(Users, nil).Once()
+				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("filter.Filter")).Return(Users, nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
@@ -449,7 +449,7 @@ func TestUserServer_GetStream(t *testing.T) {
 			wantErr: true,
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]entity.User{}, errors.New("test err")).Once()
+				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("filter.Filter")).Return([]entity.User{}, errors.New("test err")).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
