@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS "users" (
     id VARCHAR NOT NULL,
-    name VARCHAR NOT NULL,
+    name VARCHAR  UNIQUE NOT NULL,
     email VARCHAR NOT NULL,
     password VARCHAR NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
