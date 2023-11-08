@@ -1,0 +1,8 @@
+resources:
+  - user-service.yaml
+  - cockroachdb.yaml
+
+commonLabels:
+  app: user
+  aggregate: user
+  bersion: v0.1.0
