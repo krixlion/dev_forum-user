@@ -5,6 +5,8 @@ metadata:
   # automatically load balance connections to the different database pods.
   name: cockroachdb-service
 spec:
+  selector:
+    database: cockroachdb
   clusterIP: None
   ports:
     # The main port, served by gRPC, serves Postgres-flavor SQL, internode
@@ -12,7 +14,6 @@ spec:
     - port: 26257
       targetPort: 26257
       name: grpc
-  selector:
 ---
 apiVersion: v1
 kind: Service
@@ -25,6 +26,7 @@ spec:
       targetPort: 8080
       name: http
   selector:
+    database: cockroachdb
     statefulset.kubernetes.io/pod-name: cockroachdb-cluster-0
 ---
 apiVersion: apps/v1
@@ -35,6 +37,9 @@ spec:
   serviceName: cockroachdb-service
   replicas: 1
   template:
+    metadata:
+      labels:
+        database: cockroachdb
     spec:
       volumes:
         - name: cockroachdb-data

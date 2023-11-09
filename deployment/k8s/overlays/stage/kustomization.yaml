@@ -1,0 +1,11 @@
+resources:
+  - ../../base
+
+namespace: stage
+
+replicas:
+  - name: user-d
+    count: 3
+
+configMapGenerator:
+  - name: user-env

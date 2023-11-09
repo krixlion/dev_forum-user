@@ -3,6 +3,5 @@ resources:
   - cockroachdb.yaml
 
 commonLabels:
-  app: user
   aggregate: user
   bersion: v0.1.0
