@@ -47,6 +47,12 @@ Make sure to set current working directory to project root.
 go test ./... -race
 ```
 
+Generate coverage report using `go tool cover`.
+```
+go test -coverprofile  cover.out ./...
+go tool cover -html cover.out -o cover.html
+```
+
 If the service is deployed on kubernetes you can use `make`.
 ```
 make k8s-integration-test
