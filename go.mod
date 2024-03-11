@@ -1,8 +1,6 @@
 module github.com/krixlion/dev_forum-user
 
-go 1.21
-
-toolchain go1.21.3
+go 1.22
 
 require (
 	github.com/cockroachdb/cockroach-go v2.0.1+incompatible
