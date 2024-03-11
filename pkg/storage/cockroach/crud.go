@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
+	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/str"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
-	"github.com/krixlion/goqu/v9"
-	"github.com/krixlion/goqu/v9/exp"
 )
 
 const usersTable = "users"

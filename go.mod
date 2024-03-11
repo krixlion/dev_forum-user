@@ -6,13 +6,13 @@ toolchain go1.21.3
 
 require (
 	github.com/cockroachdb/cockroach-go v2.0.1+incompatible
+	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/krixlion/dev_forum-lib v0.0.0-20231109223736-d836a1fad578
 	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230321225335-aacfca540fbc
-	github.com/krixlion/goqu/v9 v9.18.0
 	github.com/lib/pq v1.10.8
 	github.com/mennanov/fieldmask-utils v1.0.0
 	github.com/pressly/goose/v3 v3.10.0

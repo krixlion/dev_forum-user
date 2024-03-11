@@ -82,6 +82,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/denisenkom/go-mssqldb v0.10.0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
+github.com/doug-martin/goqu/v9 v9.19.0 h1:PD7t1X3tRcUiSdc5TEyOFKujZA5gs3VSA7wxSvBx7qo=
+github.com/doug-martin/goqu/v9 v9.19.0/go.mod h1:nf0Wc2/hV3gYK9LiyqIrzBEVGlI8qW3GuDCEobC4wBQ=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
@@ -217,8 +219,6 @@ github.com/krixlion/dev_forum-lib v0.0.0-20231109223736-d836a1fad578 h1:QnwrNYr8
 github.com/krixlion/dev_forum-lib v0.0.0-20231109223736-d836a1fad578/go.mod h1:GPn1WsI+7N6bQJms9NRWA5TkDVTPjxIscaPOOl0wAWs=
 github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230321225335-aacfca540fbc h1:Y4xhEFGMmjSGR7BS9eap/8EmBnV+K7AvkmJ98a1Me6I=
 github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230321225335-aacfca540fbc/go.mod h1:1JHhee+g0puxJgC5TPA+S6oL3wTiwBNxPf9ko8Vy/qw=
-github.com/krixlion/goqu/v9 v9.18.0 h1:EqleUA5shCLAsRxsnds8LbEODyaeL5AnLGJ5Fu377Fw=
-github.com/krixlion/goqu/v9 v9.18.0/go.mod h1:qcuRtpVhASaDgnka7rb5mAz4YtsLubdm0XnwSSNslow=
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.10.1/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/lib/pq v1.10.8 h1:3fdt97i/cwSU83+E0hZTC/Xpc9mTZxc6UWSCRcSbxiE=

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/krixlion/dev_forum-lib/filter"
-	"github.com/krixlion/goqu/v9/exp"
 )
 
 var ErrTagNotFound error = errors.New("tag not found")

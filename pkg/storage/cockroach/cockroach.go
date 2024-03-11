@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
-	"github.com/krixlion/goqu/v9"
-	_ "github.com/krixlion/goqu/v9/dialect/postgres"
 	"go.nhat.io/otelsql"
 	"go.opentelemetry.io/otel/trace"
 
