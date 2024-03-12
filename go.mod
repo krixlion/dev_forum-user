@@ -22,7 +22,7 @@ require (
 	go.uber.org/goleak v1.2.1
 	golang.org/x/crypto v0.15.0
 	google.golang.org/grpc v1.59.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
