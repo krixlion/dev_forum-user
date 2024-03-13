@@ -23,10 +23,12 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
 var port int
+var isTLS bool
 
 // Hardcoded root dir name.
 const projectDir = "app"
@@ -34,8 +36,10 @@ const serviceName = "user-service"
 
 func init() {
 	portFlag := flag.Int("p", 50051, "The gRPC server port")
+	insecureFlag := flag.Bool("insecure", false, "Whether to not use TLS over gRPC")
 	flag.Parse()
 	port = *portFlag
+	isTLS = *insecureFlag
 }
 
 func main() {
@@ -45,9 +49,16 @@ func main() {
 	shutdownTracing, err := tracing.InitProvider(ctx, serviceName)
 	if err != nil {
 		logging.Log("Failed to initialize tracing", "err", err)
+		return
 	}
 
-	service := service.NewUserService(port, getServiceDependencies())
+	deps, err := getServiceDependencies(isTLS)
+	if err != nil {
+		logging.Log("Failed to initialize service dependencies", "err", err)
+		return
+	}
+
+	service := service.NewUserService(port, deps)
 	service.Run(ctx)
 
 	<-ctx.Done()
@@ -67,27 +78,33 @@ func main() {
 
 // getServiceDependencies is a Composition root.
 // Panics on any non-nil error.
-func getServiceDependencies() service.Dependencies {
+func getServiceDependencies(isTLS bool) (service.Dependencies, error) {
+	serverCreds := insecure.NewCredentials()
+	if isTLS {
+		caCertPool, err := cert.LoadCaPool(os.Getenv("TLS_CA_PATH"))
+		if err != nil {
+			return service.Dependencies{}, err
+		}
+
+		serverCert, err := cert.LoadX509KeyPair(os.Getenv("TLS_CERT_PATH"), os.Getenv("TLS_KEY_PATH"))
+		if err != nil {
+			return service.Dependencies{}, err
+		}
+
+		serverCreds = cert.NewServerOptionalMTLSCreds(caCertPool, serverCert)
+	}
+
 	tracer := otel.Tracer(serviceName)
+
 	logger, err := logging.NewLogger()
 	if err != nil {
-		panic(err)
+		return service.Dependencies{}, err
 	}
 
-	dbPort := os.Getenv("DB_PORT")
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASS")
-	dbName := os.Getenv("DB_NAME")
-	storage, err := cockroach.Make(dbHost, dbPort, dbUser, dbPass, dbName, tracer)
+	storage, err := cockroach.Make(os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_NAME"), tracer)
 	if err != nil {
-		panic(err)
+		return service.Dependencies{}, err
 	}
-
-	mqPort := os.Getenv("MQ_PORT")
-	mqHost := os.Getenv("MQ_HOST")
-	mqUser := os.Getenv("MQ_USER")
-	mqPass := os.Getenv("MQ_PASS")
 
 	consumer := serviceName
 	mqConfig := rabbitmq.Config{
@@ -101,10 +118,10 @@ func getServiceDependencies() service.Dependencies {
 
 	messageQueue := rabbitmq.NewRabbitMQ(
 		consumer,
-		mqUser,
-		mqPass,
-		mqHost,
-		mqPort,
+		os.Getenv("MQ_USER"),
+		os.Getenv("MQ_PASS"),
+		os.Getenv("MQ_HOST"),
+		os.Getenv("MQ_PORT"),
 		mqConfig,
 		rabbitmq.WithLogger(logger),
 		rabbitmq.WithTracer(tracer),
@@ -120,25 +137,9 @@ func getServiceDependencies() service.Dependencies {
 		Dispatcher: dispatcher,
 	})
 
-	caCertPath := os.Getenv("TLS_CA_PATH")
-	caCertPool, err := cert.LoadCaPool(caCertPath)
-	if err != nil {
-		panic(err)
-	}
-
-	tlsCertPath := os.Getenv("TLS_CERT_PATH")
-	tlsKeyPath := os.Getenv("TLS_KEY_PATH")
-	serverCert, err := cert.LoadX509KeyPair(tlsCertPath, tlsKeyPath)
-	if err != nil {
-		panic(err)
-	}
-
-	creds := cert.NewServerOptionalMTLSCreds(caCertPool, serverCert)
-
 	grpcServer := grpc.NewServer(
-		grpc.Creds(creds),
+		grpc.Creds(serverCreds),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
-
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			otelgrpc.UnaryServerInterceptor(),
@@ -159,5 +160,5 @@ func getServiceDependencies() service.Dependencies {
 		GRPCServer:   grpcServer,
 		Broker:       broker,
 		ShutdownFunc: closeFunc,
-	}
+	}, nil
 }
