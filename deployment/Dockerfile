@@ -9,6 +9,9 @@ ENV CGO_ENABLED=0
 RUN mkdir -p /go/src/dev_forum-user
 WORKDIR /go/src/dev_forum-user
 
+# Make a user to import to scratch image
+RUN useradd -u 10001 app
+
 # Make sure you run `docker build` from the project root or set the context accordingly.
 ADD . .
 
@@ -21,6 +24,9 @@ WORKDIR /app
 
 COPY --from=builder /go/src/dev_forum-user/main /app/main
 COPY --from=builder /go/src/dev_forum-user/.env /app/.env
+
+COPY --from=builder /etc/passwd /etc/passwd
+USER app
 
 EXPOSE 50051
 EXPOSE 2223
