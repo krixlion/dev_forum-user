@@ -6,7 +6,6 @@ ENV GOFLAGS=-mod=vendor
 # Must be set in order to avoid dynamic links to libraries unavailable in alpine/scratch images.
 ENV CGO_ENABLED=0
 
-RUN mkdir -p /go/src/dev_forum-user
 WORKDIR /go/src/dev_forum-user
 
 # Make a user to import to scratch image
