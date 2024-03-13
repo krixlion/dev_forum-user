@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tls-certificate-user
+spec:
+  secretName: tls-secret-user
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+    - server auth
+    - key encipherment
+    - digital signature
+  dnsNames:
+    - "user-service"
+  issuerRef:
+    name: root-issuer
+    kind: Issuer

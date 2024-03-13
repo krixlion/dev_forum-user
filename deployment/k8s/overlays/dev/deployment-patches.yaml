@@ -12,6 +12,21 @@
     name: hot-reload
     mountPath: /app
 
+# Add a TLS certificate
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: tls-certs
+    secret:
+      secretName: tls-secret-user
+
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: tls-certs
+    mountPath: /tls
+    readOnly: true
+
 - op: replace
   path: /spec/template/spec/containers/0/name
   value: "debug"

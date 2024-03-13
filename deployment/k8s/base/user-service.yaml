@@ -36,6 +36,7 @@ spec:
                 name: user-env
           image: "krixlion/dev_forum-user:0.1.0"
           imagePullPolicy: IfNotPresent
+          args: []
           name: server
           ports:
             - name: grpc
@@ -49,30 +50,3 @@ spec:
             requests:
               cpu: 5m
               memory: 80Mi
-          volumeMounts:
-            - name: tls-certs
-              mountPath: /tls
-              readOnly: true
-      volumes:
-        - name: tls-certs
-          secret:
-            secretName: tls-secret-user
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: tls-certificate-user
-spec:
-  secretName: tls-secret-user
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  usages:
-    - server auth
-    - key encipherment
-    - digital signature
-  dnsNames:
-    - "user-service"
-  issuerRef:
-    name: root-issuer
-    kind: Issuer
