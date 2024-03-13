@@ -25,4 +25,4 @@ COPY --from=builder /go/src/dev_forum-user/.env /app/.env
 EXPOSE 50051
 EXPOSE 2223
 
-CMD [ "/app/main" ]
+ENTRYPOINT [ "/app/main" ]
