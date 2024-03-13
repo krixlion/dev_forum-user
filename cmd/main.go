@@ -39,7 +39,7 @@ func init() {
 	insecureFlag := flag.Bool("insecure", false, "Whether to not use TLS over gRPC")
 	flag.Parse()
 	port = *portFlag
-	isTLS = *insecureFlag
+	isTLS = !(*insecureFlag)
 }
 
 func main() {
