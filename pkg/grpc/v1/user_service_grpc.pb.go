@@ -36,6 +36,8 @@ type UserServiceClient interface {
 	Update(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	// Requires mTLS client cert to be provided.
+	// Returns all user info including hashed password.
 	GetSecret(ctx context.Context, in *GetUserSecretRequest, opts ...grpc.CallOption) (*GetUserSecretResponse, error)
 	GetStream(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (UserService_GetStreamClient, error)
 }
@@ -133,6 +135,8 @@ type UserServiceServer interface {
 	Update(context.Context, *UpdateUserRequest) (*emptypb.Empty, error)
 	Delete(context.Context, *DeleteUserRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	// Requires mTLS client cert to be provided.
+	// Returns all user info including hashed password.
 	GetSecret(context.Context, *GetUserSecretRequest) (*GetUserSecretResponse, error)
 	GetStream(*GetUsersRequest, UserService_GetStreamServer) error
 	mustEmbedUnimplementedUserServiceServer()

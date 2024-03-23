@@ -17,6 +17,8 @@ service UserService {
     
     rpc Get(GetUserRequest) returns (GetUserResponse) {}
     
+    // Requires mTLS client cert to be provided.
+    // Returns all user info including hashed password.
     rpc GetSecret(GetUserSecretRequest) returns (GetUserSecretResponse) {}
     
     rpc GetStream(GetUsersRequest) returns (stream User) {}

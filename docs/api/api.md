@@ -204,7 +204,7 @@
 | Update | [UpdateUserRequest](#user-UpdateUserRequest) | [.google.protobuf.Empty](#google-protobuf-Empty) |  |
 | Delete | [DeleteUserRequest](#user-DeleteUserRequest) | [.google.protobuf.Empty](#google-protobuf-Empty) |  |
 | Get | [GetUserRequest](#user-GetUserRequest) | [GetUserResponse](#user-GetUserResponse) |  |
-| GetSecret | [GetUserSecretRequest](#user-GetUserSecretRequest) | [GetUserSecretResponse](#user-GetUserSecretResponse) |  |
+| GetSecret | [GetUserSecretRequest](#user-GetUserSecretRequest) | [GetUserSecretResponse](#user-GetUserSecretResponse) | Requires mTLS client cert to be provided. Returns all user info including hashed password. |
 | GetStream | [GetUsersRequest](#user-GetUsersRequest) | [User](#user-User) stream |  |
 
  
