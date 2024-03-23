@@ -27,6 +27,11 @@ type UserServer struct {
 	broker     event.Broker
 	logger     logging.Logger
 	tracer     trace.Tracer
+	config     Config
+}
+
+type Config struct {
+	VerifyClientCert bool
 }
 
 type Dependencies struct {
@@ -35,6 +40,7 @@ type Dependencies struct {
 	Dispatcher *dispatcher.Dispatcher
 	Logger     logging.Logger
 	Tracer     trace.Tracer
+	Config     Config
 }
 
 func MakeUserServer(d Dependencies) UserServer {
@@ -44,6 +50,7 @@ func MakeUserServer(d Dependencies) UserServer {
 		dispatcher: d.Dispatcher,
 		tracer:     d.Tracer,
 		logger:     d.Logger,
+		config:     d.Config,
 	}
 }
 
@@ -152,8 +159,10 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	if err := cert.VerifyClientTLS(ctx, "auth-service"); err != nil {
-		return nil, err
+	if s.config.VerifyClientCert {
+		if err := cert.VerifyClientTLS(ctx, "auth-service"); err != nil {
+			return nil, err
+		}
 	}
 
 	query := filter.Filter{}
