@@ -5,7 +5,7 @@ namespace: stage
 
 replicas:
   - name: user-d
-    count: 3
+    count: 1
 
 configMapGenerator:
   - name: user-env
