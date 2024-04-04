@@ -20,6 +20,9 @@ kind: Deployment
 metadata:
   name: user-d
 spec:
+  selector:
+    matchLabels:
+      app: user
   replicas: 1
   revisionHistoryLimit: 0
   strategy:
