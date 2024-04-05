@@ -53,7 +53,7 @@ func main() {
 		return
 	}
 
-	service := service.NewUserService(port, deps)
+	service := service.MakeUserService(port, deps)
 	service.Run(ctx)
 
 	<-ctx.Done()

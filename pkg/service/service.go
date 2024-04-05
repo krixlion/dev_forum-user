@@ -29,7 +29,7 @@ type Dependencies struct {
 	ShutdownFunc func() error
 }
 
-func NewUserService(grpcPort int, d Dependencies) UserService {
+func MakeUserService(grpcPort int, d Dependencies) UserService {
 	return UserService{
 		grpcPort:   grpcPort,
 		grpcServer: d.GRPCServer,
