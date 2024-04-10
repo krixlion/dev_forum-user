@@ -139,7 +139,7 @@ func TestUserServer_Get(t *testing.T) {
 			}
 
 			// Equals false if both are nil or they point to the same memory address
-			// so be sure to use seperate structs when providing args in order to prevent SEGV.
+			// so be sure to use separate structs when providing args in order to prevent SEGV.
 			if getResponse != tt.want {
 				if !cmp.Equal(getResponse.User, tt.want.User, cmpopts.IgnoreUnexported(pb.User{})) {
 					t.Errorf("Users are not equal:\n Got = %+v\n, want = %+v\n", getResponse.User, tt.want.User)
@@ -225,7 +225,7 @@ func TestUserServer_Create(t *testing.T) {
 			tt.storage.AssertNumberOfCalls(t, "Create", 1)
 
 			// Equals false if both are nil or point to the same memory address
-			// so be sure to use seperate variables when providing args in order to prevent SEGV.
+			// so be sure to use separate variables when providing args in order to prevent SEGV.
 			if createResponse != tt.dontWant {
 				if _, err := uuid.FromString(createResponse.Id); err != nil {
 					t.Errorf("User ID is not correct UUID:\n ID = %+v\n err = %+v", createResponse.Id, err)
@@ -308,7 +308,7 @@ func TestUserServer_Update(t *testing.T) {
 
 			tt.storage.AssertNumberOfCalls(t, "Update", 1)
 			// Equals false if both are nil or they point to the same memory address
-			// so be sure to use seperate structs when providing args in order to prevent SEGV.
+			// so be sure to use separate structs when providing args in order to prevent SEGV.
 			if got != tt.want {
 				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(emptypb.Empty{})) {
 					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
