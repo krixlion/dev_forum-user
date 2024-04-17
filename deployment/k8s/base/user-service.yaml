@@ -9,11 +9,11 @@ spec:
     - name: grpc
       protocol: TCP
       port: 50051
-      targetPort: 50051
+      targetPort: grpc
     - name: metrics
       protocol: TCP
       port: 2223
-      targetPort: 2223
+      targetPort: metrics
 ---
 apiVersion: apps/v1
 kind: Deployment
