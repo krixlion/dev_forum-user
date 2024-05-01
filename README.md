@@ -41,11 +41,10 @@ make k8s-run overlay=<dev/stage>
 ```
 ```shell
 # To delete
-make k8s-stop overlay=dev
+make k8s-stop overlay=<dev/stage>
 ```
 
 ## Testing
-
 Run unit and integration tests using Go command.
 ```shell
 #  Add `-short` flag to skip integration tests.
