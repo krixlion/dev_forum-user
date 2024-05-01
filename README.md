@@ -59,7 +59,7 @@ go test ./... -race
 ```
 
 Generate coverage report using `go tool cover`.
-```
+```shell
 go test -coverprofile  cover.out ./...
 go tool cover -html cover.out -o cover.html
 ```
