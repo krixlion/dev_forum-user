@@ -22,7 +22,10 @@ jobs:
           cp .env.example .env
           docker build . -t dev_forum-user:latest -f deployment/Dockerfile --target test
           kind load docker-image dev_forum-user:latest --name "testing"
-          
+      
+      - name: Debugging with ssh
+        uses: lhotari/action-upterm@v1
+        
       - name: Deploy service
         run: |
           # Add namespace if it does not exist.
