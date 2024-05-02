@@ -35,15 +35,15 @@ k8s-db-migrate-down:
 k8s-unit-test: # param: args
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -short -race ${args} ./...  
 
-k8s-integration-test: # param: overlay
+k8s-integration-test:
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -race ${args} ./...  
 
 k8s-test-gen-coverage:
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go test -coverprofile  cover.out ./...
 	$(kubernetes) exec -it deploy/${AGGREGATE_ID}-d -- go tool cover -html cover.out -o cover.html
 
-k8s-run: k8s-stop # param: overlay
+k8s-run: k8s-stop
 	$(kubernetes) -k $(overlays-path)/${overlay} apply
 
-k8s-stop: # param: overlay
+k8s-stop:
 	- $(kubernetes) -k $(overlays-path)/${overlay} delete 
