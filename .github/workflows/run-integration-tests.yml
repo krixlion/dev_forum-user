@@ -13,14 +13,15 @@ jobs:
         uses: helm/kind-action@v1.10.0
         with:
           cluster_name: testing
-
+        
       - name: Checkout code
         uses: actions/checkout@v4.1.4
-
+        
       - name: Build and load Docker image to Kind
         run: |
           cp .env.example .env
           docker build -t dev_forum-user:latest . -f deployment/Dockerfile
+          kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f - # add namespace if does not exist
           kind load docker-image dev_forum-user:latest --name "testing"
 
       - name: Run tests
