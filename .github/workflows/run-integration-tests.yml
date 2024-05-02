@@ -25,8 +25,8 @@ jobs:
           
       - name: Deploy service
         run: |
-          kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f - # add namespace if does not exist          
-          make k8s-run overlay=dev
+          kubectl create namespace stage --dry-run=client -o yaml | kubectl apply -f - # add namespace if does not exist          
+          make k8s-run overlay=stage
 
       - name: Run tests
         run: |
