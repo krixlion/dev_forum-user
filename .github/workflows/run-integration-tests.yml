@@ -22,7 +22,6 @@ jobs:
           cp .env.example .env
           docker build . -t krixlion/dev_forum-user:latest -f deployment/Dockerfile --target test
           kind load docker-image krixlion/dev_forum-user:latest --name "testing"
-          kubectl -n test wait --for=condition=ready pod -l aggregate=user
 
       - name: Deploy service
         run: |
@@ -33,4 +32,5 @@ jobs:
 
       - name: Run tests
         run: |
+          make k8s-db-migrate-up
           make k8s-integration-test overlay=test args="timeout=3s"
