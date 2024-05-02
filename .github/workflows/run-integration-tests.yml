@@ -11,7 +11,9 @@ jobs:
     steps:
       - name: Kind Cluster
         uses: helm/kind-action@v1.10.0
-            
+        with:
+          cluster_name: testing
+
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
@@ -19,7 +21,7 @@ jobs:
         run: |
           cp .env.example .env
           docker build -t dev_forum-user:latest . -f deployment/Dockerfile
-          kind load docker-image dev_forum-user:latest
+          kind load docker-image dev_forum-user:latest --name "testing"
 
       - name: Run tests
         run: |
