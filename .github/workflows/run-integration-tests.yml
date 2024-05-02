@@ -17,6 +17,7 @@ jobs:
 
       - name: Build and load Docker image to Kind
         run: |
+          cp .env.example .env
           docker build -t dev_forum-user:latest . -f deployment/Dockerfile
           kind load docker-image dev_forum-user:latest
 
