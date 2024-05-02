@@ -9,7 +9,7 @@ ENV CGO_ENABLED=0
 WORKDIR /go/src/dev_forum-user
 
 # Make a user to import to scratch image
-RUN useradd -u 10001 app
+RUN useradd -u 10001 -m app
 
 # Make sure you run `docker build` from the project root or set the context accordingly.
 ADD . .
