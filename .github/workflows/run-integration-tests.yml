@@ -17,8 +17,8 @@ jobs:
 
       - name: Build and load Docker image to Kind
         run: |
-          docker build -t mymicroservice:latest .
-          kind load docker-image mymicroservice:latest
+          docker build -t dev_forum-user:latest deployment/Dockerfile
+          kind load docker-image dev_forum-user:latest
 
       - name: Run tests
         run: |
