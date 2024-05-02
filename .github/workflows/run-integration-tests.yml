@@ -31,4 +31,4 @@ jobs:
 
       - name: Run tests
         run: |
-          make k8s-integration-test args="timeout=3s"
+          make k8s-integration-test overlay=test args="timeout=3s"
