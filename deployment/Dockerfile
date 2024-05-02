@@ -22,14 +22,14 @@ FROM build as test
 WORKDIR /app
 USER app
 
-COPY --from=build /go/src/dev_forum-user/ /app/
+COPY --from=build --chown=app:app /go/src/dev_forum-user/ /app/
 
 ENTRYPOINT [ "/app/main" ]
 
 FROM scratch as prod
 WORKDIR /app
 
-COPY --from=build /go/src/dev_forum-user/main /app/main
+COPY --from=build  /go/src/dev_forum-user/main /app/main
 COPY --from=build /go/src/dev_forum-user/.env /app/.env
 
 COPY --from=build /etc/passwd /etc/passwd
