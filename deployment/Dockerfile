@@ -20,7 +20,7 @@ RUN go mod tidy && \
 
 FROM build as test
 
-ENTRYPOINT [ "main" ]
+ENTRYPOINT [ "./main" ]
 
 FROM scratch as prod
 WORKDIR /app
