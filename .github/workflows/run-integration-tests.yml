@@ -20,13 +20,13 @@ jobs:
       - name: Build and load Docker image to Kind
         run: |
           cp .env.example .env
-          docker build -t dev_forum-user:latest . -f deployment/Dockerfile
+          docker build . -t dev_forum-user:latest -f deployment/Dockerfile --target test
           kind load docker-image dev_forum-user:latest --name "testing"
           
       - name: Deploy service
         run: |
           # Add namespace if it does not exist.
-          kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -          
+          kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -
           make k8s-run overlay=test
 
       - name: Run tests

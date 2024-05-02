@@ -1,4 +1,4 @@
-FROM golang:1.22 AS builder
+FROM golang:1.22 AS build
 
 ENV GO111MODULE=on
 ENV GOFLAGS=-mod=vendor
@@ -18,13 +18,17 @@ RUN go mod tidy && \
     go mod vendor && \
     go build -o main cmd/main.go
 
-FROM scratch
+FROM build as test
+
+ENTRYPOINT [ "main" ]
+
+FROM scratch as prod
 WORKDIR /app
 
-COPY --from=builder /go/src/dev_forum-user/main /app/main
-COPY --from=builder /go/src/dev_forum-user/.env /app/.env
+COPY --from=build /go/src/dev_forum-user/main /app/main
+COPY --from=build /go/src/dev_forum-user/.env /app/.env
 
-COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=build /etc/passwd /etc/passwd
 USER app
 
 EXPOSE 50051
