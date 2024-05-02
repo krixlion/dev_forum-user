@@ -30,7 +30,7 @@ You need a working [Docker environment](https://docs.docker.com/engine).
 You can use the Dockerfile located in `deployment/` to build and run the service on a docker container.
 
 ```shell
-make build-image version=latest` 
+make build-image version=latest
 ``` 
 
 ```shell
