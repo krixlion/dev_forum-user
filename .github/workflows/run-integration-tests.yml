@@ -13,16 +13,17 @@ jobs:
         uses: helm/kind-action@v1.10.0
         with:
           cluster_name: testing
-        
+
       - name: Checkout code at repo root
         uses: actions/checkout@v4.1.4
-      
+
       - name: Build and load Docker image to Kind
         run: |
           cp .env.example .env
           docker build . -t krixlion/dev_forum-user:latest -f deployment/Dockerfile --target test
           kind load docker-image krixlion/dev_forum-user:latest --name "testing"
-      
+          kubectl -n test wait --for=condition=ready pod -l aggregate=user
+
       - name: Deploy service
         run: |
           # Add namespace if it does not exist.
