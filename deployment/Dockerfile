@@ -19,11 +19,10 @@ RUN go mod tidy && \
     go build -o main cmd/main.go
 
 FROM build as test
-USER app
 WORKDIR /app
+USER app
 
-COPY /go/src/dev_forum-user/main /app/main
-COPY /go/src/dev_forum-user/.env /app/.env
+COPY --from=build /go/src/dev_forum-user/ /app/
 
 ENTRYPOINT [ "/app/main" ]
 
