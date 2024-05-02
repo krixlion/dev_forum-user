@@ -21,8 +21,12 @@ jobs:
         run: |
           cp .env.example .env
           docker build -t dev_forum-user:latest . -f deployment/Dockerfile
-          kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f - # add namespace if does not exist
           kind load docker-image dev_forum-user:latest --name "testing"
+          
+      - name: Deploy service
+        run: |
+          kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f - # add namespace if does not exist          
+          make k8s-run overlay=dev
 
       - name: Run tests
         run: |
