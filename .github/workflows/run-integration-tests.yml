@@ -30,9 +30,6 @@ jobs:
           make k8s-run overlay=test
           kubectl -n test wait --for=condition=ready pod -l aggregate=user
           
-      - name: Debugging with ssh
-        uses: lhotari/action-upterm@v1
-  
       - name: Run tests
         run: |
           make k8s-db-migrate-up overlay=test
