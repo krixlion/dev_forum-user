@@ -29,6 +29,7 @@ jobs:
           # Add namespace if it does not exist.
           kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -
           make k8s-run overlay=test
+          kubectl -n test wait --for=condition=ready pod -l aggregate=user
 
       - name: Run tests
         run: |
