@@ -30,9 +30,6 @@ jobs:
           kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -
           make k8s-run overlay=test
 
-      - name: Debugging with ssh
-        uses: lhotari/action-upterm@v1
-
       - name: Run tests
         run: |
           make k8s-integration-test overlay=test args="timeout=3s"
