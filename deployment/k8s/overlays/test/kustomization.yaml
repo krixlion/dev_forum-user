@@ -1,0 +1,26 @@
+resources:
+  - ../../base
+
+namespace: test
+
+images:
+  - name: krixlion/dev_forum-user
+    newTag: latest
+
+replicas:
+  - name: user-d
+    count: 1
+
+configMapGenerator:
+  - name: user-env
+
+patches:
+  - patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: "-insecure=true"
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: user-d
