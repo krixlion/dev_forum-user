@@ -6,6 +6,10 @@ Although this is a one-man project, contributions are welcome.
 Please feel free to open issues or submit pull requests.
 
 # dev_forum-user
+[![GoDoc](https://godoc.org/github.com/krixlion/dev_forum-user?status.svg)](https://godoc.org/github.com/krixlion/dev_forum-user)
+[![Go Report Card](https://goreportcard.com/badge/github.com/krixlion/dev_forum-user)](https://goreportcard.com/report/github.com/krixlion/dev_forum-user)
+[![GitHub License](https://img.shields.io/github/license/krixlion/dev_forum-user)](LICENSE)
+
 User-service registers user identities in the dev_forum system.
 
 It's dependent on:
