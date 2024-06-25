@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/krixlion/dev_forum-lib v0.0.0-20231109223736-d836a1fad578
+	github.com/krixlion/dev_forum-lib v0.0.0-20240515143147-1333b54ad616
 	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20230321225335-aacfca540fbc
 	github.com/lib/pq v1.10.8
 	github.com/mennanov/fieldmask-utils v1.0.0
