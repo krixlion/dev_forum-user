@@ -2,6 +2,8 @@ package cockroach
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/cockroachdb/cockroach-go/crdb"
 	"github.com/doug-martin/goqu/v9"
@@ -10,6 +12,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/str"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 )
 
 const usersTable = "users"
@@ -33,6 +36,9 @@ func (db CockroachDB) Get(ctx context.Context, params filter.Filter) (entity.Use
 	var dataset userDataset
 	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
 		tracing.SetSpanErr(span, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.User{}, storage.ErrNotFound
+		}
 		return entity.User{}, err
 	}
 
@@ -102,6 +108,7 @@ func (db CockroachDB) Create(ctx context.Context, user entity.User) error {
 		tracing.SetSpanErr(span, err)
 		return err
 	}
+
 	err = crdb.Execute(func() error {
 		_, err := db.conn.ExecContext(ctx, query, args...)
 		return err

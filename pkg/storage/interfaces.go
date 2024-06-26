@@ -2,12 +2,15 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
+
+var ErrNotFound error = errors.New("not found")
 
 type CQRStorage interface {
 	Storage

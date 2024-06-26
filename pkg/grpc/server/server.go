@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/krixlion/dev_forum-lib/cert"
@@ -144,6 +145,9 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 
 	user, err := s.storage.Get(ctx, query)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, status.Errorf(codes.NotFound, "Failed to get user: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
 
