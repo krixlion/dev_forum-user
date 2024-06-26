@@ -20,6 +20,7 @@ func (db CockroachDB) Get(ctx context.Context, params filter.Filter) (entity.Use
 
 	exps, err := filterToSqlExp(params)
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return entity.User{}, err
 	}
 
@@ -31,11 +32,13 @@ func (db CockroachDB) Get(ctx context.Context, params filter.Filter) (entity.Use
 
 	var dataset userDataset
 	if err := db.conn.GetContext(ctx, &dataset, query, args...); err != nil {
+		tracing.SetSpanErr(span, err)
 		return entity.User{}, err
 	}
 
 	user, err := dataset.User()
 	if err != nil {
+		tracing.SetSpanErr(span, err)
 		return entity.User{}, err
 	}
 
