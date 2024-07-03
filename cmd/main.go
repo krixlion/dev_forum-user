@@ -144,10 +144,9 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 
 	grpcServer := grpc.NewServer(
 		grpc.Creds(serverCreds),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
-			otelgrpc.UnaryServerInterceptor(),
 			userServer.ValidateRequestInterceptor(),
 		),
 	)
