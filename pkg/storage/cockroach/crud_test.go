@@ -2,7 +2,6 @@ package cockroach
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"os"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/internal/gentest"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach/testdata"
 )
 
@@ -284,9 +284,8 @@ func TestDB_Delete(t *testing.T) {
 				Value:     tt.id,
 			}}
 
-			_, err := db.Get(ctx, filter)
-			if !errors.Is(err, sql.ErrNoRows) {
-				t.Errorf("DB.Delete():\n gotErr = %T, wantErr = %T, err = %v", err, sql.ErrNoRows, err)
+			if _, err := db.Get(ctx, filter); !errors.Is(err, storage.ErrNotFound) {
+				t.Errorf("DB.Delete():\n gotErr = %T, wantErr = %T, err = %v", err, storage.ErrNotFound, err)
 				return
 			}
 		})
