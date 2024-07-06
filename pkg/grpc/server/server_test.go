@@ -324,10 +324,7 @@ func TestUserServer_Update(t *testing.T) {
 func TestUserServer_Delete(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
 	User := &pb.User{
-		Id:       v.Id,
-		Name:     v.Name,
-		Password: v.Password,
-		Email:    v.Email,
+		Id: v.Id,
 	}
 
 	tests := []struct {
