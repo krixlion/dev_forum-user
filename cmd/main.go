@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"os"
 	"os/signal"
@@ -89,7 +90,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		serverCreds = cert.NewServerOptionalMTLSCreds(caCertPool, serverCert)
 	}
 
-	shutdownTracing, err := tracing.InitProvider(ctx, serviceName)
+	shutdownTracing, err := tracing.InitProvider(ctx, serviceName, os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
 	if err != nil {
 		return service.Dependencies{}, err
 	}
@@ -153,17 +154,14 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	reflection.Register(grpcServer)
 	pb.RegisterUserServiceServer(grpcServer, userServer)
 
-	closeFunc := func() error {
-		grpcServer.GracefulStop()
-		shutdownTracing()
-		return userServer.Close()
-	}
-
 	return service.Dependencies{
-		Logger:       logger,
-		Dispatcher:   dispatcher,
-		GRPCServer:   grpcServer,
-		Broker:       broker,
-		ShutdownFunc: closeFunc,
+		Logger:     logger,
+		Dispatcher: dispatcher,
+		GRPCServer: grpcServer,
+		Broker:     broker,
+		ShutdownFunc: func() error {
+			grpcServer.GracefulStop()
+			return errors.Join(userServer.Close(), shutdownTracing(), logger.Sync())
+		},
 	}, nil
 }

@@ -10,10 +10,6 @@ spec:
       protocol: TCP
       port: 50051
       targetPort: grpc
-    - name: metrics
-      protocol: TCP
-      port: 2223
-      targetPort: metrics
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,8 +40,6 @@ spec:
           ports:
             - name: grpc
               containerPort: 50051
-            - name: metrics
-              containerPort: 2223
           resources:
             limits:
               cpu: 20m
