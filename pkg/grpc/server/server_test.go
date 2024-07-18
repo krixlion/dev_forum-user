@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
@@ -21,11 +21,10 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"github.com/krixlion/dev_forum-user/pkg/storage/storagemocks"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // setUpServer initializes and runs in the background a gRPC

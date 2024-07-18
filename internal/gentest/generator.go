@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 	"golang.org/x/crypto/bcrypt"
 )

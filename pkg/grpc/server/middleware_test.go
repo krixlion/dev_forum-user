@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors"
 	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
@@ -31,6 +32,42 @@ func setUpStubServer(db storage.Storage, broker event.Broker) UserServer {
 	})
 
 	return s
+}
+
+func TestUserServer_AuthMatcher(t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+		want   bool
+	}{
+		{
+			name:   "Test returns false for Get method",
+			method: "Get",
+			want:   false,
+		},
+		{
+			name:   "Test returns true for Create method",
+			method: "Create",
+			want:   false,
+		},
+		{
+			name:   "Test returns true for Update method",
+			method: "Update",
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			callMeta := interceptors.CallMeta{Method: tt.method, Service: "user.UserService"}
+			got := UserServer{}.AuthMatcher().Match(ctx, callMeta)
+			if got != tt.want {
+				t.Errorf("UserServer.AuthMatcher():\n got = %v\n want = %v\n", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestUserServer_validateCreate(t *testing.T) {

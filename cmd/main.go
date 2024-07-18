@@ -9,7 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/selector"
+	"github.com/krixlion/dev_forum-auth/pkg/grpc/auth"
+	authPb "github.com/krixlion/dev_forum-auth/pkg/grpc/v1"
+	"github.com/krixlion/dev_forum-auth/pkg/tokens"
+	"github.com/krixlion/dev_forum-auth/pkg/tokens/validator"
 	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/env"
 	"github.com/krixlion/dev_forum-lib/event/broker"
@@ -24,6 +30,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
@@ -76,11 +83,14 @@ func main() {
 // Panics on any non-nil error.
 func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool) (service.Dependencies, error) {
 	serverCreds := insecure.NewCredentials()
+	clientCreds := insecure.NewCredentials()
 	if isTLS {
 		caCertPool, err := cert.LoadCaPool(os.Getenv("TLS_CA_PATH"))
 		if err != nil {
 			return service.Dependencies{}, err
 		}
+
+		clientCreds = credentials.NewClientTLSFromCert(caCertPool, "")
 
 		serverCert, err := cert.LoadX509KeyPair(os.Getenv("TLS_CERT_PATH"), os.Getenv("TLS_KEY_PATH"))
 		if err != nil {
@@ -107,7 +117,6 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		return service.Dependencies{}, err
 	}
 
-	consumer := serviceName
 	mqConfig := rabbitmq.Config{
 		QueueSize:         100,
 		MaxWorkers:        100,
@@ -117,8 +126,8 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		ClosedTimeout:     time.Second * 15,
 	}
 
-	messageQueue := rabbitmq.NewRabbitMQ(
-		consumer,
+	mq := rabbitmq.NewRabbitMQ(
+		serviceName,
 		os.Getenv("MQ_USER"),
 		os.Getenv("MQ_PASS"),
 		os.Getenv("MQ_HOST"),
@@ -127,7 +136,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		rabbitmq.WithLogger(logger),
 		rabbitmq.WithTracer(tracer),
 	)
-	broker := broker.NewBroker(messageQueue, logger, tracer)
+	broker := broker.NewBroker(mq, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(20)
 
 	userConfig := server.Config{
@@ -143,14 +152,31 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		Config:     userConfig,
 	})
 
+	authConn, err := grpc.NewClient(os.Getenv("AUTH_SERVICE_SERVICE_HOST")+":"+os.Getenv("AUTH_SERVICE_SERVICE_PORT"),
+		grpc.WithTransportCredentials(clientCreds),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
+	if err != nil {
+		return service.Dependencies{}, err
+	}
+
+	tokenValidator, err := validator.NewValidator(tokens.DefaultIssuer, validator.DefaultRefreshFunc(authPb.NewAuthServiceClient(authConn), tracer), validator.WithLogger(logger))
+	if err != nil {
+		return service.Dependencies{}, err
+	}
+
+	go tokenValidator.Run(ctx)
+
 	grpcServer := grpc.NewServer(
 		grpc.Creds(serverCreds),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
+			selector.UnaryServerInterceptor(grpc_auth.UnaryServerInterceptor(auth.NewAuthFunc(tokenValidator, tracer)), userServer.AuthMatcher()),
 			userServer.ValidateRequestInterceptor(),
 		),
 	)
+
 	reflection.Register(grpcServer)
 	pb.RegisterUserServiceServer(grpcServer, userServer)
 
