@@ -55,10 +55,6 @@ func MakeUserServer(d Dependencies) UserServer {
 	}
 }
 
-func (s UserServer) Close() error {
-	return errors.Join(s.storage.Close(), s.broker.Close())
-}
-
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	user := userFromPB(req.GetUser())
 
