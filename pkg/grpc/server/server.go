@@ -71,9 +71,7 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &pb.CreateUserResponse{
-		Id: user.Id,
-	}, nil
+	return &pb.CreateUserResponse{Id: user.Id}, nil
 }
 
 func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
@@ -228,5 +226,6 @@ func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_Get
 			}
 		}
 	}
+
 	return nil
 }

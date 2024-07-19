@@ -32,10 +32,10 @@ func Test_verifyField(t *testing.T) {
 			args: args{input: "password"},
 		},
 	}
-	for i, tt := range tests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := verifyField(tt.args.input); (err != nil) != tt.wantErr {
-				t.Errorf("verifyField() set: %d\n error = %v, wantErr %v", i, err, tt.wantErr)
+				t.Errorf("verifyField():\n error = %v\n wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}

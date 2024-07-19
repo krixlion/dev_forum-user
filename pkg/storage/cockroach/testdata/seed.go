@@ -12,13 +12,6 @@ import (
 	"github.com/krixlion/dev_forum-lib/env"
 )
 
-func init() {
-	if err := initTestData(); err != nil {
-		panic(err)
-	}
-
-}
-
 func Seed() error {
 	env.Load("app")
 

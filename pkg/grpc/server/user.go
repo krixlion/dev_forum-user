@@ -26,16 +26,14 @@ func mapUserFields(s string) string {
 		return "Password"
 	case "email":
 		return "Email"
-	case "created_at":
-		return "CreatedAt"
 	case "updated_at":
 		return "UpdatedAt"
-
 	case "updated_at.seconds":
 		return "UpdatedAt.Seconds"
 	case "updated_at.nanos":
 		return "UpdatedAt.Nanos"
-
+	case "created_at":
+		return "CreatedAt"
 	case "created_at.seconds":
 		return "CreatedAt.Seconds"
 	case "created_at.nanos":

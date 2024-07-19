@@ -91,6 +91,11 @@ func Test_userFromDataset(t *testing.T) {
 				t.Errorf("userFromDataset() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			if tt.wantErr {
+				return
+			}
+
 			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second)) {
 				t.Errorf("userFromDataset():\n got = %v\n want = %v\n %v", got, tt.want, cmp.Diff(got, tt.want))
 			}
@@ -136,6 +141,11 @@ func Test_usersFromDatasets(t *testing.T) {
 				t.Errorf("usersFromDatasets() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			if tt.wantErr {
+				return
+			}
+
 			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Second)) {
 				t.Errorf("usersFromDatasets():\n got = %v\n want = %v\n %v", got, tt.want, cmp.Diff(got, tt.want))
 			}

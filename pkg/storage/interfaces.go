@@ -3,19 +3,12 @@ package storage
 import (
 	"context"
 	"errors"
-	"io"
 
-	"github.com/krixlion/dev_forum-lib/event"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
 var ErrNotFound error = errors.New("not found")
-
-type CQRStorage interface {
-	Storage
-	CatchUp(event.Event)
-}
 
 type Storage interface {
 	Getter
@@ -23,19 +16,12 @@ type Storage interface {
 }
 
 type Getter interface {
-	io.Closer
 	Get(ctx context.Context, filter filter.Filter) (entity.User, error)
 	GetMultiple(ctx context.Context, offset, limit string, filter filter.Filter) ([]entity.User, error)
 }
 
 type Writer interface {
-	io.Closer
 	Create(context.Context, entity.User) error
 	Update(context.Context, entity.User) error
 	Delete(ctx context.Context, id string) error
-}
-
-type Eventstore interface {
-	event.Consumer
-	Writer
 }

@@ -40,7 +40,7 @@ func setUpDB() CockroachDB {
 
 func TestDB_Get(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping integration db.Get test.")
+		t.Skip("Skipping CockroachDB.Get integration test...")
 	}
 	tests := []struct {
 		name    string
@@ -67,12 +67,16 @@ func TestDB_Get(t *testing.T) {
 
 			got, err := db.Get(ctx, tt.filter)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DB.Get() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CockroachDB.Get():\n error = %v\n wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreTypes(time.Time{})) {
-				t.Errorf("DB.Get():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
+
+			if tt.wantErr {
 				return
+			}
+
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreTypes(time.Time{})) {
+				t.Errorf("CockroachDB.Get():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
 	}
@@ -80,7 +84,7 @@ func TestDB_Get(t *testing.T) {
 
 func TestDB_GetMultiple(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping db.GetMultiple integration test.")
+		t.Skip("Skipping CockroachDB.GetMultiple integration test...")
 	}
 
 	type args struct {
@@ -136,12 +140,16 @@ func TestDB_GetMultiple(t *testing.T) {
 
 			got, err := db.GetMultiple(ctx, tt.args.offset, tt.args.limit, tt.args.filter)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DB.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CockroachDB.GetMultiple():\n error = %v\n wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Minute)) {
-				t.Errorf("DB.GetMultiple():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
+
+			if tt.wantErr {
 				return
+			}
+
+			if !cmp.Equal(got, tt.want, cmpopts.EquateApproxTime(time.Minute)) {
+				t.Errorf("CockroachDB.GetMultiple():\n got = %v\n want = %v\n %v\n", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
 	}
@@ -149,7 +157,7 @@ func TestDB_GetMultiple(t *testing.T) {
 
 func TestDB_Create(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping db.Create integration test.")
+		t.Skip("Skipping CockroachDB.Create integration test...")
 	}
 	tests := []struct {
 		name    string
@@ -174,7 +182,11 @@ func TestDB_Create(t *testing.T) {
 			db := setUpDB()
 
 			if err := db.Create(ctx, tt.user); (err != nil) != tt.wantErr {
-				t.Errorf("DB.Create() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CockroachDB.Create():\n error = %v\n wantErr = %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
 				return
 			}
 
@@ -187,13 +199,12 @@ func TestDB_Create(t *testing.T) {
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
-				t.Errorf("Failed to DB.Get() after DB.Create() error = %v", err)
+				t.Errorf("Failed to CockroachDB.Get() after CockroachDB.Create() error = %v", err)
 				return
 			}
 
 			if !cmp.Equal(got, want, cmpopts.EquateApproxTime(time.Minute)) {
-				t.Errorf("DB.Create():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
-				return
+				t.Errorf("CockroachDB.Create():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
 			}
 		})
 	}
@@ -201,7 +212,7 @@ func TestDB_Create(t *testing.T) {
 
 func TestDB_Update(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping db.Update integration test.")
+		t.Skip("Skipping CockroachDB.Update integration test...")
 	}
 	tests := []struct {
 		name    string
@@ -226,7 +237,11 @@ func TestDB_Update(t *testing.T) {
 			db := setUpDB()
 
 			if err := db.Update(ctx, tt.user); (err != nil) != tt.wantErr {
-				t.Errorf("DB.Update() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CockroachDB.Update():\n error = %v\n wantErr = %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
 				return
 			}
 
@@ -239,13 +254,12 @@ func TestDB_Update(t *testing.T) {
 
 			got, err := db.Get(ctx, filter)
 			if err != nil {
-				t.Errorf("Failed to DB.Get() after DB.Update() error = %v", err)
+				t.Errorf("Failed to CockroachDB.Get() after CockroachDB.Update() error = %v", err)
 				return
 			}
 
 			if !cmp.Equal(got, want, cmpopts.IgnoreTypes(time.Time{})) {
-				t.Errorf("DB.Update():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
-				return
+				t.Errorf("CockroachDB.Update():\n got = %v\n want = %v\n %v\n", got, want, cmp.Diff(got, want))
 			}
 		})
 	}
@@ -253,7 +267,7 @@ func TestDB_Update(t *testing.T) {
 
 func TestDB_Delete(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping db.Delete integration test.")
+		t.Skip("Skipping CockroachDB.Delete integration test...")
 	}
 	tests := []struct {
 		name    string
@@ -274,7 +288,11 @@ func TestDB_Delete(t *testing.T) {
 			db := setUpDB()
 
 			if err := db.Delete(ctx, tt.id); (err != nil) != tt.wantErr {
-				t.Errorf("DB.Delete() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CockroachDB.Delete():\n error = %v\n wantErr = %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
 				return
 			}
 
@@ -285,8 +303,7 @@ func TestDB_Delete(t *testing.T) {
 			}}
 
 			if _, err := db.Get(ctx, filter); !errors.Is(err, storage.ErrNotFound) {
-				t.Errorf("DB.Delete():\n gotErr = %T, wantErr = %T, err = %v", err, storage.ErrNotFound, err)
-				return
+				t.Errorf("CockroachDB.Delete():\n error = %+v\n wantErr = %+v", err, storage.ErrNotFound)
 			}
 		})
 	}

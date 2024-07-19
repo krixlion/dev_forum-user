@@ -7,17 +7,15 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/entity"
 )
 
-var (
-	Users map[string]entity.User
-)
+var Users = initUsers()
 
-func initTestData() error {
+func initUsers() map[string]entity.User {
 	count := 3
-	Users = make(map[string]entity.User, count)
+	users := make(map[string]entity.User, count)
 
 	for i := 1; i <= count; i++ {
 		id := strconv.Itoa(i)
-		Users[id] = entity.User{
+		users[id] = entity.User{
 			Id:        id,
 			Name:      "name-" + id,
 			Email:     "email-" + id,
@@ -27,5 +25,5 @@ func initTestData() error {
 		}
 	}
 
-	return nil
+	return users
 }

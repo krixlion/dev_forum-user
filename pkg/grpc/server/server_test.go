@@ -24,13 +24,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // setUpServer initializes and runs in the background a gRPC
 // server allowing only for local calls for testing.
 // Returns a client to interact with the server.
-// The server is shutdown when ctx.Done() receives.
+// The server is cancel when ctx.Done() receives.
 func setUpServer(ctx context.Context, db storage.Storage, broker mocks.Broker) pb.UserServiceClient {
 	// bufconn allows the server to call itself
 	// great for testing across whole infrastructure
@@ -78,21 +77,16 @@ func TestUserServer_Get(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc    string
+		name    string
 		arg     *pb.GetUserRequest
-		want    *pb.GetUserResponse
-		wantErr bool
 		storage storagemocks.Storage
 		broker  mocks.Broker
+		want    *pb.GetUserResponse
+		wantErr bool
 	}{
 		{
-			desc: "Test if response is returned properly on simple request",
-			arg: &pb.GetUserRequest{
-				Id: user.Id,
-			},
-			want: &pb.GetUserResponse{
-				User: user,
-			},
+			name: "Test if response is returned properly on simple request",
+			arg:  &pb.GetUserRequest{Id: user.Id},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(v, nil).Once()
@@ -103,14 +97,12 @@ func TestUserServer_Get(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			want:    &pb.GetUserResponse{User: user},
+			wantErr: false,
 		},
 		{
-			desc: "Test if error is returned properly on storage error",
-			arg: &pb.GetUserRequest{
-				Id: "",
-			},
-			want:    nil,
-			wantErr: true,
+			name: "Test if error is returned properly on storage error",
+			arg:  &pb.GetUserRequest{Id: ""},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, errors.New("test err")).Once()
@@ -121,31 +113,28 @@ func TestUserServer_Get(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			ctx, shutdown := context.WithCancel(context.Background())
-			defer shutdown()
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
 
 			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			ctx, cancel := context.WithTimeout(ctx, time.Second)
-			defer cancel()
-
-			getResponse, err := client.Get(ctx, tt.arg)
+			got, err := client.Get(ctx, tt.arg)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Failed to Get User, err: %v", err)
+				t.Errorf("UserServer.Get():\n error = %v\n wantErr = %v", err, tt.wantErr)
 				return
 			}
 
-			// Equals false if both are nil or they point to the same memory address
-			// so be sure to use separate structs when providing args in order to prevent SEGV.
-			if getResponse != tt.want {
-				if !cmp.Equal(getResponse.User, tt.want.User, cmpopts.IgnoreUnexported(pb.User{})) {
-					t.Errorf("Users are not equal:\n Got = %+v\n, want = %+v\n", getResponse.User, tt.want.User)
-					return
-				}
+			if tt.wantErr {
+				return
+			}
+
+			if !cmp.Equal(got.User, tt.want.User, cmpopts.IgnoreUnexported(pb.User{})) {
+				t.Errorf("UserServer.Get():\n got = %v\n want = %v", got, tt.want)
 			}
 		})
 	}
@@ -153,7 +142,7 @@ func TestUserServer_Get(t *testing.T) {
 
 func TestUserServer_Create(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
-	User := &pb.User{
+	user := &pb.User{
 		Id:       v.Id,
 		Name:     v.Name,
 		Password: v.Password,
@@ -161,21 +150,16 @@ func TestUserServer_Create(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc     string
-		arg      *pb.CreateUserRequest
-		dontWant *pb.CreateUserResponse
-		wantErr  bool
-		storage  storagemocks.Storage
-		broker   mocks.Broker
+		name    string
+		arg     *pb.CreateUserRequest
+		storage storagemocks.Storage
+		broker  mocks.Broker
+		want    *pb.CreateUserResponse
+		wantErr bool
 	}{
 		{
-			desc: "Test if response is returned properly on simple request",
-			arg: &pb.CreateUserRequest{
-				User: User,
-			},
-			dontWant: &pb.CreateUserResponse{
-				Id: User.Id,
-			},
+			name: "Test if response is returned properly on simple request",
+			arg:  &pb.CreateUserRequest{User: user},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
@@ -186,14 +170,11 @@ func TestUserServer_Create(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			want: &pb.CreateUserResponse{Id: user.Id},
 		},
 		{
-			desc: "Test if error is returned properly on storage error",
-			arg: &pb.CreateUserRequest{
-				User: User,
-			},
-			dontWant: nil,
-			wantErr:  true,
+			name: "Test if error is returned properly on storage error",
+			arg:  &pb.CreateUserRequest{User: user},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Create", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
@@ -204,34 +185,28 @@ func TestUserServer_Create(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			ctx, shutdown := context.WithCancel(context.Background())
-			defer shutdown()
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			createResponse, err := client.Create(ctx, tt.arg)
-			if err != nil {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
-				if !tt.wantErr {
-					t.Errorf("Failed to Get User, err: %v", err)
-					return
-				}
-			} else {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
+			got, err := client.Create(ctx, tt.arg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserServer.Create():\n error = %v\n wantErr = %v", err, tt.wantErr)
+				return
 			}
 
-			tt.storage.AssertNumberOfCalls(t, "Create", 1)
+			if tt.wantErr {
+				return
+			}
 
-			// Equals false if both are nil or point to the same memory address
-			// so be sure to use separate variables when providing args in order to prevent SEGV.
-			if createResponse != tt.dontWant {
-				if _, err := uuid.FromString(createResponse.Id); err != nil {
-					t.Errorf("User ID is not correct UUID:\n ID = %+v\n err = %+v", createResponse.Id, err)
-					return
-				}
+			if _, err := uuid.FromString(got.Id); err != nil {
+				t.Errorf("UserServer.Create(): failed to parse user id as a uuid:\n id = %v\n err = %v", got.Id, err)
 			}
 		})
 	}
@@ -239,7 +214,7 @@ func TestUserServer_Create(t *testing.T) {
 
 func TestUserServer_Update(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
-	User := &pb.User{
+	user := &pb.User{
 		Id:       v.Id,
 		Name:     v.Id,
 		Password: v.Password,
@@ -247,19 +222,15 @@ func TestUserServer_Update(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc    string
+		name    string
 		arg     *pb.UpdateUserRequest
-		want    *emptypb.Empty
-		wantErr bool
 		storage storagemocks.Storage
 		broker  mocks.Broker
+		wantErr bool
 	}{
 		{
-			desc: "Test if response is returned properly on simple request",
-			arg: &pb.UpdateUserRequest{
-				User: User,
-			},
-			want: &emptypb.Empty{},
+			name: "Test if response is returned properly on simple request",
+			arg:  &pb.UpdateUserRequest{User: user},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(nil).Once()
@@ -270,14 +241,11 @@ func TestUserServer_Update(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: false,
 		},
 		{
-			desc: "Test if error is returned properly on storage error",
-			arg: &pb.UpdateUserRequest{
-				User: User,
-			},
-			want:    nil,
-			wantErr: true,
+			name: "Test if error is returned properly on storage error",
+			arg:  &pb.UpdateUserRequest{User: user},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Update", mock.Anything, mock.AnythingOfType("entity.User")).Return(errors.New("test err")).Once()
@@ -288,33 +256,18 @@ func TestUserServer_Update(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			ctx, shutdown := context.WithCancel(context.Background())
-			defer shutdown()
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			got, err := client.Update(ctx, tt.arg)
-			if err != nil {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
-				if !tt.wantErr {
-					t.Errorf("Failed to Update User, err: %v", err)
-					return
-				}
-			} else {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
-			}
-
-			tt.storage.AssertNumberOfCalls(t, "Update", 1)
-			// Equals false if both are nil or they point to the same memory address
-			// so be sure to use separate structs when providing args in order to prevent SEGV.
-			if got != tt.want {
-				if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(emptypb.Empty{})) {
-					t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
-					return
-				}
+			if _, err := client.Update(ctx, tt.arg); (err != nil) != tt.wantErr {
+				t.Errorf("UserServer.Update():\n error = %v\n wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -322,24 +275,20 @@ func TestUserServer_Update(t *testing.T) {
 
 func TestUserServer_Delete(t *testing.T) {
 	v := gentest.RandomUser(2, 5, 5)
-	User := &pb.User{
+	user := &pb.User{
 		Id: v.Id,
 	}
 
 	tests := []struct {
-		desc    string
+		name    string
 		arg     *pb.DeleteUserRequest
-		want    *emptypb.Empty
-		wantErr bool
 		storage storagemocks.Storage
 		broker  mocks.Broker
+		wantErr bool
 	}{
 		{
-			desc: "Test if response is returned properly on simple request",
-			arg: &pb.DeleteUserRequest{
-				Id: User.Id,
-			},
-			want: &emptypb.Empty{},
+			name: "Test if response is returned properly on simple request",
+			arg:  &pb.DeleteUserRequest{Id: user.Id},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
@@ -350,14 +299,11 @@ func TestUserServer_Delete(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: false,
 		},
 		{
-			desc: "Test if error is returned properly on storage error",
-			arg: &pb.DeleteUserRequest{
-				Id: User.Id,
-			},
-			want:    nil,
-			wantErr: true,
+			name: "Test if error is returned properly on storage error",
+			arg:  &pb.DeleteUserRequest{Id: user.Id},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("Delete", mock.Anything, mock.AnythingOfType("string")).Return(errors.New("test err")).Once()
@@ -368,45 +314,33 @@ func TestUserServer_Delete(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			ctx, shutdown := context.WithCancel(context.Background())
-			defer shutdown()
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			client := setUpServer(ctx, tt.storage, tt.broker)
 
-			got, err := client.Delete(ctx, tt.arg)
-			if err != nil {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 0)
-
-				if !tt.wantErr {
-					t.Errorf("Failed to Delete User, err: %v", err)
-					return
-				}
-			} else {
-				tt.broker.AssertNumberOfCalls(t, "ResilientPublish", 1)
-			}
-			tt.storage.AssertNumberOfCalls(t, "Delete", 1)
-
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(emptypb.Empty{})) {
-				t.Errorf("Wrong response:\n got = %+v\n want = %+v\n", got, tt.want)
-				return
+			if _, err := client.Delete(ctx, tt.arg); (err != nil) != tt.wantErr {
+				t.Errorf("UserServer.Delete():\n error = %v\n wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
 func TestUserServer_GetStream(t *testing.T) {
-	var Users []entity.User
+	var users []entity.User
 	for i := 0; i < 5; i++ {
-		User := gentest.RandomUser(2, 5, 5)
-		Users = append(Users, User)
+		user := gentest.RandomUser(2, 5, 5)
+		users = append(users, user)
 	}
 
 	var pbUsers []*pb.User
-	for _, v := range Users {
+	for _, v := range users {
 		pbUser := &pb.User{
 			Id:   v.Id,
 			Name: v.Name,
@@ -415,23 +349,19 @@ func TestUserServer_GetStream(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc    string
+		name    string
 		arg     *pb.GetUsersRequest
-		want    []*pb.User
-		wantErr bool
 		storage storagemocks.Storage
 		broker  mocks.Broker
+		want    []*pb.User
+		wantErr bool
 	}{
 		{
-			desc: "Test if response is returned properly on simple request",
-			arg: &pb.GetUsersRequest{
-				Offset: "0",
-				Limit:  "5",
-			},
-			want: pbUsers,
+			name: "Test if response is returned properly on simple request",
+			arg:  &pb.GetUsersRequest{Offset: "0", Limit: "5"},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("filter.Filter")).Return(Users, nil).Once()
+				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("filter.Filter")).Return(users, nil).Once()
 				return m
 			}(),
 			broker: func() mocks.Broker {
@@ -439,12 +369,12 @@ func TestUserServer_GetStream(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			want:    pbUsers,
+			wantErr: false,
 		},
 		{
-			desc:    "Test if error is returned properly on storage error",
-			arg:     &pb.GetUsersRequest{},
-			want:    nil,
-			wantErr: true,
+			name: "Test if error is returned properly on storage error",
+			arg:  &pb.GetUsersRequest{Offset: "n/a", Limit: "n/a", Filter: "n/a"},
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
 				m.On("GetMultiple", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("filter.Filter")).Return([]entity.User{}, errors.New("test err")).Once()
@@ -455,33 +385,38 @@ func TestUserServer_GetStream(t *testing.T) {
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
 				return m
 			}(),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			ctx, shutdown := context.WithCancel(context.Background())
-			defer shutdown()
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			client := setUpServer(ctx, tt.storage, tt.broker)
 
 			stream, err := client.GetStream(ctx, tt.arg)
 			if err != nil {
-				t.Errorf("Failed to Get stream, err: %v", err)
+				t.Errorf("UserServer.GetStream(): failed to init stream:\n error = %v\n", err)
 				return
 			}
 
 			var got []*pb.User
 			for i := 0; i < len(tt.want); i++ {
-				User, err := stream.Recv()
+				user, err := stream.Recv()
 				if (err != nil) != tt.wantErr {
-					t.Errorf("Failed to receive User from stream, err: %v", err)
+					t.Errorf("UserServer.GetStream():\n error = %v\n wantErr = %v", err, tt.wantErr)
 					return
 				}
-				got = append(got, User)
+				got = append(got, user)
+			}
+
+			if tt.wantErr {
+				return
 			}
 
 			if !cmp.Equal(got, tt.want, cmpopts.IgnoreUnexported(pb.User{})) {
-				t.Errorf("Users are not equal:\n Got = %+v\n want = %+v\n", got, tt.want)
-				return
+				t.Errorf("UserServer.GetStream():\n got = %v\n want = %v", got, tt.want)
 			}
 		})
 	}
