@@ -27,6 +27,7 @@ func (UserServer) AuthMatcher() selector.Matcher {
 		disabledAuthPaths := []string{
 			"/user.UserService/Create",
 			"/user.UserService/Get",
+			"/user.UserService/GetSecret",
 		}
 		return !slices.Contains(disabledAuthPaths, callMeta.FullMethod())
 	})
