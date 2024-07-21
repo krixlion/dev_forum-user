@@ -10,6 +10,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/logging"
+	"github.com/krixlion/dev_forum-lib/tracing"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-user/pkg/storage"
 
@@ -56,13 +57,16 @@ func MakeUserServer(d Dependencies) UserServer {
 }
 
 func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.Create")
+	defer span.End()
+
 	user := userFromPB(req.GetUser())
 
 	if err := s.storage.Create(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	event, err := event.MakeEvent(event.UserAggregate, event.UserCreated, user)
+	event, err := event.MakeEvent(event.UserAggregate, event.UserCreated, user, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -75,8 +79,8 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 }
 
 func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	ctx, span := s.tracer.Start(ctx, "server.Delete")
+	defer span.End()
 
 	id := req.GetId()
 
@@ -84,7 +88,7 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	event, err := event.MakeEvent(event.UserAggregate, event.UserDeleted, id)
+	event, err := event.MakeEvent(event.UserAggregate, event.UserDeleted, id, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -97,8 +101,8 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 }
 
 func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emptypb.Empty, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	ctx, span := s.tracer.Start(ctx, "server.Update")
+	defer span.End()
 
 	mask, err := fmask.MaskFromPaths(req.GetFieldMask().GetPaths(), mapUserFields)
 	if err != nil {
@@ -116,7 +120,7 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	event, err := event.MakeEvent(event.UserAggregate, event.UserUpdated, user)
+	event, err := event.MakeEvent(event.UserAggregate, event.UserUpdated, user, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -128,8 +132,8 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 }
 
 func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	ctx, span := s.tracer.Start(ctx, "server.Get")
+	defer span.End()
 
 	query := filter.Filter{{
 		Attribute: "id",
@@ -154,8 +158,8 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 }
 
 func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest) (*pb.GetUserSecretResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	ctx, span := s.tracer.Start(ctx, "server.GetSecret")
+	defer span.End()
 
 	if s.config.VerifyClientCert {
 		if err := cert.VerifyClientTLS(ctx, "auth-service"); err != nil {
@@ -198,8 +202,8 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 }
 
 func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_GetStreamServer) error {
-	ctx, cancel := context.WithTimeout(stream.Context(), time.Second*10)
-	defer cancel()
+	ctx, span := s.tracer.Start(stream.Context(), "server.GetStream")
+	defer span.End()
 
 	query, err := filter.Parse(req.GetFilter())
 	if err != nil {
