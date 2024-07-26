@@ -7,6 +7,7 @@ Please feel free to open issues or submit pull requests.
 
 # dev_forum-user
 [![GoDoc](https://godoc.org/github.com/krixlion/dev_forum-user?status.svg)](https://godoc.org/github.com/krixlion/dev_forum-user)
+[![Coverage Status](https://coveralls.io/repos/github/krixlion/dev_forum-user/badge.svg?branch=dev)](https://coveralls.io/github/krixlion/dev_forum-user?branch=dev)
 [![Go Report Card](https://goreportcard.com/badge/github.com/krixlion/dev_forum-user)](https://goreportcard.com/report/github.com/krixlion/dev_forum-user)
 [![GitHub License](https://img.shields.io/github/license/krixlion/dev_forum-user)](LICENSE)
 
