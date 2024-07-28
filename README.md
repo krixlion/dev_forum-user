@@ -39,7 +39,7 @@ make build-image version=latest
 ``` 
 
 ```shell
-docker run -p 50051:50051 -p 2223:2223 krixlion/dev_forum-user:0.1.0
+docker run -p 50051:50051 krixlion/dev_forum-user:0.1.0
 ```
 ### On Kubernetes (recommended)
 You need a working [Kubernetes environment](https://kubernetes.io/docs/setup) with [kustomize](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization).
