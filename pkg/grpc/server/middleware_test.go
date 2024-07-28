@@ -28,7 +28,7 @@ func setUpStubServer(db storage.Storage, broker event.Broker) UserServer {
 		Logger:     nulls.NullLogger{},
 		Broker:     broker,
 		Tracer:     nulls.NullTracer{},
-		Dispatcher: dispatcher.NewDispatcher(0),
+		Dispatcher: dispatcher.NewDispatcher(1),
 	})
 
 	return s
