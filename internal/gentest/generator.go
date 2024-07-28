@@ -2,7 +2,7 @@ package gentest
 
 import (
 	"encoding/json"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -14,7 +14,7 @@ func RandomString(length int) string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	v := make([]rune, length)
 	for i := range v {
-		v[i] = letters[rand.Intn(len(letters))]
+		v[i] = letters[rand.IntN(len(letters))]
 	}
 	return string(v)
 }
