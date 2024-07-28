@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"html"
 	"net/mail"
 	"slices"
@@ -13,6 +14,7 @@ import (
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
+	"github.com/krixlion/dev_forum-user/pkg/storage"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -151,8 +153,12 @@ func (s UserServer) validateDelete(ctx context.Context, req *pb.DeleteUserReques
 
 	if _, err := s.storage.Get(ctx, query); err != nil {
 		tracing.SetSpanErr(span, err)
-		// Do not let user know whether entity with provided ID existed before deleting or not.
-		return nil, nil
+		if errors.Is(err, storage.ErrNotFound) {
+			// Do not let the user know whether user with provided ID existed or not.
+			return nil, nil
+		}
+
+		return nil, status.Error(codes.Internal, "Failed to delete user")
 	}
 
 	return handler(ctx, req)

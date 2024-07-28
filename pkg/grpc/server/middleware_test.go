@@ -234,31 +234,44 @@ func TestUserServer_validateDelete(t *testing.T) {
 		name    string
 		handler mocks.UnaryHandler
 		storage storagemocks.Storage
-		broker  mocks.Broker
 		req     *pb.DeleteUserRequest
 		wantErr bool
 	}{
 		{
-			name: "Test if returns OK regardless whether user exists or not",
-			broker: func() mocks.Broker {
-				m := mocks.NewBroker()
-				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
+			name: "Test if returns OK when the user does not exist",
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, storage.ErrNotFound).Once()
 				return m
 			}(),
+			req:     &pb.DeleteUserRequest{Id: gentest.RandomString(10)},
+			wantErr: false,
+		},
+		{
+			name: "Test if calls the handler when the user exists",
 			handler: func() mocks.UnaryHandler {
 				m := mocks.NewUnaryHandler()
+				// Invoked the mock itself.
+				m.On("1", mock.Anything, &pb.DeleteUserRequest{Id: "test-id"}).Return(nil, nil).Once()
 				return m
 			}(),
 			storage: func() storagemocks.Storage {
 				m := storagemocks.NewStorage()
-				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, errors.New("not found")).Once()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, nil).Once()
 				return m
 			}(),
-
-			req: &pb.DeleteUserRequest{
-				Id: gentest.RandomString(10),
-			},
+			req:     &pb.DeleteUserRequest{Id: "test-id"},
 			wantErr: false,
+		},
+		{
+			name: "Test if returns error on storage error",
+			storage: func() storagemocks.Storage {
+				m := storagemocks.NewStorage()
+				m.On("Get", mock.Anything, mock.AnythingOfType("filter.Filter")).Return(entity.User{}, errors.New("test-err")).Once()
+				return m
+			}(),
+			req:     &pb.DeleteUserRequest{Id: gentest.RandomString(10)},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -266,7 +279,7 @@ func TestUserServer_validateDelete(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			s := setUpStubServer(tt.storage, tt.broker)
+			s := setUpStubServer(tt.storage, mocks.NewBroker())
 
 			_, err := s.validateDelete(ctx, tt.req, tt.handler.GetMock())
 			if (err != nil) != tt.wantErr {
