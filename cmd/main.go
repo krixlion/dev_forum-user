@@ -117,6 +117,20 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		return service.Dependencies{}, err
 	}
 
+	authConn, err := grpc.NewClient(os.Getenv("AUTH_SERVICE_SERVICE_HOST")+":"+os.Getenv("AUTH_SERVICE_SERVICE_PORT"),
+		grpc.WithTransportCredentials(clientCreds),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
+	if err != nil {
+		return service.Dependencies{}, err
+	}
+	tokenValidator, err := validator.NewValidator(tokens.DefaultIssuer, validator.DefaultRefreshFunc(authPb.NewAuthServiceClient(authConn), tracer), validator.WithLogger(logger))
+	if err != nil {
+		return service.Dependencies{}, err
+	}
+
+	go tokenValidator.Run(ctx)
+
 	mqConfig := rabbitmq.Config{
 		QueueSize:         100,
 		MaxWorkers:        100,
@@ -139,6 +153,8 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	broker := broker.NewBroker(mq, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(20)
 
+	dispatcher.Register(tokenValidator)
+
 	userConfig := server.Config{
 		VerifyClientCert: isTLS,
 	}
@@ -151,21 +167,6 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		Dispatcher: dispatcher,
 		Config:     userConfig,
 	})
-
-	authConn, err := grpc.NewClient(os.Getenv("AUTH_SERVICE_SERVICE_HOST")+":"+os.Getenv("AUTH_SERVICE_SERVICE_PORT"),
-		grpc.WithTransportCredentials(clientCreds),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-	)
-	if err != nil {
-		return service.Dependencies{}, err
-	}
-
-	tokenValidator, err := validator.NewValidator(tokens.DefaultIssuer, validator.DefaultRefreshFunc(authPb.NewAuthServiceClient(authConn), tracer), validator.WithLogger(logger))
-	if err != nil {
-		return service.Dependencies{}, err
-	}
-
-	go tokenValidator.Run(ctx)
 
 	grpcServer := grpc.NewServer(
 		grpc.Creds(serverCreds),
