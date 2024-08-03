@@ -160,12 +160,11 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	}
 
 	userServer := server.MakeUserServer(server.Dependencies{
-		Storage:    storage,
-		Logger:     logger,
-		Broker:     broker,
-		Tracer:     tracer,
-		Dispatcher: dispatcher,
-		Config:     userConfig,
+		Storage: storage,
+		Logger:  logger,
+		Broker:  broker,
+		Tracer:  tracer,
+		Config:  userConfig,
 	})
 
 	grpcServer := grpc.NewServer(

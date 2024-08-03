@@ -7,7 +7,6 @@ import (
 
 	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/event"
-	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-lib/tracing"
@@ -24,12 +23,11 @@ import (
 
 type UserServer struct {
 	pb.UnimplementedUserServiceServer
-	storage    storage.Storage
-	dispatcher *dispatcher.Dispatcher
-	broker     event.Broker
-	logger     logging.Logger
-	tracer     trace.Tracer
-	config     Config
+	storage storage.Storage
+	broker  event.Broker
+	logger  logging.Logger
+	tracer  trace.Tracer
+	config  Config
 }
 
 type Config struct {
@@ -37,22 +35,20 @@ type Config struct {
 }
 
 type Dependencies struct {
-	Storage    storage.Storage
-	Broker     event.Broker
-	Dispatcher *dispatcher.Dispatcher
-	Logger     logging.Logger
-	Tracer     trace.Tracer
-	Config     Config
+	Storage storage.Storage
+	Broker  event.Broker
+	Logger  logging.Logger
+	Tracer  trace.Tracer
+	Config  Config
 }
 
 func MakeUserServer(d Dependencies) UserServer {
 	return UserServer{
-		storage:    d.Storage,
-		broker:     d.Broker,
-		dispatcher: d.Dispatcher,
-		tracer:     d.Tracer,
-		logger:     d.Logger,
-		config:     d.Config,
+		storage: d.Storage,
+		broker:  d.Broker,
+		tracer:  d.Tracer,
+		logger:  d.Logger,
+		config:  d.Config,
 	}
 }
 

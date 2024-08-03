@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors"
 	"github.com/krixlion/dev_forum-lib/event"
-	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/internal/gentest"
@@ -24,11 +23,10 @@ import (
 
 func setUpStubServer(db storage.Storage, broker event.Broker) UserServer {
 	s := MakeUserServer(Dependencies{
-		Storage:    db,
-		Logger:     nulls.NullLogger{},
-		Broker:     broker,
-		Tracer:     nulls.NullTracer{},
-		Dispatcher: dispatcher.NewDispatcher(1),
+		Storage: db,
+		Logger:  nulls.NullLogger{},
+		Broker:  broker,
+		Tracer:  nulls.NullTracer{},
 	})
 
 	return s

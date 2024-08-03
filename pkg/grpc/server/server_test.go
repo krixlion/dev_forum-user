@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/krixlion/dev_forum-lib/event/dispatcher"
 	"github.com/krixlion/dev_forum-lib/mocks"
 	"github.com/krixlion/dev_forum-lib/nulls"
 	"github.com/krixlion/dev_forum-user/internal/gentest"
@@ -40,11 +39,10 @@ func setUpServer(ctx context.Context, db storage.Storage, broker mocks.Broker) p
 
 	s := grpc.NewServer()
 	server := server.MakeUserServer(server.Dependencies{
-		Storage:    db,
-		Logger:     nulls.NullLogger{},
-		Tracer:     nulls.NullTracer{},
-		Broker:     broker,
-		Dispatcher: dispatcher.NewDispatcher(0),
+		Storage: db,
+		Logger:  nulls.NullLogger{},
+		Tracer:  nulls.NullTracer{},
+		Broker:  broker,
 	})
 	pb.RegisterUserServiceServer(s, server)
 	go func() {
