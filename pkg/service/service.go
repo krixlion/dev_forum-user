@@ -51,6 +51,13 @@ func (s *UserService) Run(ctx context.Context) {
 		return
 	}
 
+	providers, err := s.eventProviders(ctx)
+	if err != nil {
+		s.logger.Log(ctx, "failed to register event providers", "transport", "pubsub", "err", err)
+		return
+	}
+
+	s.dispatcher.AddEventProviders(providers...)
 	go s.dispatcher.Run(ctx)
 
 	s.logger.Log(ctx, "listening", "transport", "grpc", "port", s.grpcPort)
@@ -58,6 +65,25 @@ func (s *UserService) Run(ctx context.Context) {
 	if err := s.grpcServer.Serve(lis); err != nil {
 		s.logger.Log(ctx, "failed to serve", "transport", "grpc", "err", err)
 	}
+}
+
+func (s *UserService) eventProviders(ctx context.Context) ([]<-chan event.Event, error) {
+	eTypes := map[string]event.EventType{
+		"UpdateKeySet": event.KeySetUpdated,
+	}
+
+	chans := make([]<-chan event.Event, 0, len(eTypes))
+
+	for queueName, eType := range eTypes {
+		ch, err := s.broker.Consume(ctx, queueName, eType)
+		if err != nil {
+			return nil, err
+		}
+
+		chans = append(chans, ch)
+	}
+
+	return chans, nil
 }
 
 func (s *UserService) Close() error {
