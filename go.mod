@@ -1,6 +1,6 @@
 module github.com/krixlion/dev_forum-user
 
-go 1.22
+go 1.23
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.8
