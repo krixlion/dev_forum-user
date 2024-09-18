@@ -32,6 +32,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -111,6 +112,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	if err != nil {
 		return service.Dependencies{}, err
 	}
+	grpclog.SetLoggerV2(logger)
 
 	storage, err := cockroach.Make(os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_NAME"), tracer)
 	if err != nil {
