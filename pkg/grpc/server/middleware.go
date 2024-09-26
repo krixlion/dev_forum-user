@@ -50,46 +50,39 @@ func (s UserServer) ValidateRequestInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserRequest, handler grpc.UnaryHandler) (interface{}, error) {
+func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserRequest, handler grpc.UnaryHandler) (_ interface{}, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.validateCreate")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	user := req.GetUser()
 	if user == nil {
-		err := status.Error(codes.InvalidArgument, "User not provided")
-		tracing.SetSpanErr(span, err)
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, "User not provided")
 	}
 
 	// Sanitize user input.
 	// Assign a new ID: do not let users assign custom IDs.
 	id, err := uuid.NewV4()
 	if err != nil {
-		err := status.Error(codes.Internal, err.Error())
-		tracing.SetSpanErr(span, err)
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	user.Id = id.String()
 	user.Name = html.EscapeString(user.GetName())
 
 	// Validate email.
 	if _, err := mail.ParseAddress(user.Email); err != nil {
-		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
 	// Password has to be at least 8 characters long.
 	if len(user.GetPassword()) < 8 {
-		err := status.Error(codes.FailedPrecondition, "Provided password is too short")
-		tracing.SetSpanErr(span, err)
-		return nil, err
+		return nil, status.Error(codes.FailedPrecondition, "Provided password is too short")
 	}
 
 	// Hash password before saving.
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.GetPassword()), bcrypt.MinCost)
 	if err != nil {
-		err := status.Errorf(codes.Internal, "Failed to generate hash from password: %v", err.Error())
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed to generate hash from password: %v", err.Error())
 	}
 
 	user.Password = string(hash)
@@ -99,16 +92,15 @@ func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserReques
 	return handler(ctx, req)
 }
 
-func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserRequest, handler grpc.UnaryHandler) (interface{}, error) {
+func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserRequest, handler grpc.UnaryHandler) (_ interface{}, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.validateUpdate")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	user := req.GetUser()
 
 	if user == nil {
-		err := status.Error(codes.FailedPrecondition, "User not provided")
-		tracing.SetSpanErr(span, err)
-		return nil, err
+		return nil, status.Error(codes.FailedPrecondition, "User not provided")
 	}
 
 	// Sanitize user input.
@@ -119,15 +111,12 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 
 	// Validate email.
 	if _, err := mail.ParseAddress(user.GetEmail()); err != nil {
-		tracing.SetSpanErr(span, err)
 		return nil, err
 	}
 
 	// Password has to be at least 8 characters long.
 	if len(user.Password) < 8 {
-		err := status.Error(codes.FailedPrecondition, "Provided password is too short")
-		tracing.SetSpanErr(span, err)
-		return nil, err
+		return nil, status.Error(codes.FailedPrecondition, "Provided password is too short")
 	}
 
 	return handler(ctx, req)
@@ -157,7 +146,6 @@ func (s UserServer) validateDelete(ctx context.Context, req *pb.DeleteUserReques
 			// Do not let the user know whether user with provided ID existed or not.
 			return nil, nil
 		}
-
 		return nil, status.Error(codes.Internal, "Failed to delete user")
 	}
 
