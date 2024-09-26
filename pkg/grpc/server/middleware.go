@@ -88,7 +88,7 @@ func (s UserServer) validateCreate(ctx context.Context, req *pb.CreateUserReques
 	// Hash password before saving.
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.GetPassword()), bcrypt.MinCost)
 	if err != nil {
-		err := status.Errorf(codes.Internal, err.Error())
+		err := status.Errorf(codes.Internal, "Failed to generate hash from password: %v", err.Error())
 		return nil, err
 	}
 

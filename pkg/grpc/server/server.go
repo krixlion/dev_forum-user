@@ -59,16 +59,16 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	user := userFromPB(req.GetUser())
 
 	if err := s.storage.Create(ctx, user); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to create user: %v", err.Error())
 	}
 
 	event, err := event.MakeEvent(event.UserAggregate, event.UserCreated, user, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to make the user-created event: %v", err.Error())
 	}
 
 	if err := s.broker.ResilientPublish(event); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish the user-created event: %v", err.Error())
 	}
 
 	return &pb.CreateUserResponse{Id: user.Id}, nil
@@ -81,16 +81,16 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 	id := req.GetId()
 
 	if err := s.storage.Delete(ctx, id); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to delete user: %v", err.Error())
 	}
 
 	event, err := event.MakeEvent(event.UserAggregate, event.UserDeleted, id, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to make the user-deleted event: %v", err.Error())
 	}
 
 	if err := s.broker.ResilientPublish(event); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish the user-deleted event: %v", err.Error())
 	}
 
 	return &emptypb.Empty{}, nil
@@ -102,27 +102,27 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 
 	mask, err := fmask.MaskFromPaths(req.GetFieldMask().GetPaths(), mapUserFields)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to parse the field mask: %v", err.Error())
 	}
 
 	if err := fmask.StructToStruct(mask, req.GetUser(), req.User); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to map the field mask: %v", err.Error())
 	}
 
 	user := userFromPB(req.GetUser())
 	user.UpdatedAt = time.Now()
 
 	if err := s.storage.Update(ctx, user); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to update user: %v", err.Error())
 	}
 
 	event, err := event.MakeEvent(event.UserAggregate, event.UserUpdated, user, tracing.ExtractMetadataFromContext(ctx))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to make the user-updated event: %v", err.Error())
 	}
 
 	if err := s.broker.ResilientPublish(event); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish the user-updated event: %v", err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -140,7 +140,7 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 	user, err := s.storage.Get(ctx, query)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return nil, status.Errorf(codes.NotFound, "Failed to get user: %v", err)
+			return nil, status.Errorf(codes.NotFound, "User not found: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
