@@ -52,9 +52,10 @@ func MakeUserServer(d Dependencies) UserServer {
 	}
 }
 
-func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (_ *pb.CreateUserResponse, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.Create")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	user := userFromPB(req.GetUser())
 
@@ -74,9 +75,10 @@ func (s UserServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.
 	return &pb.CreateUserResponse{Id: user.Id}, nil
 }
 
-func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
+func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (_ *emptypb.Empty, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.Delete")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	id := req.GetId()
 
@@ -96,9 +98,10 @@ func (s UserServer) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*emp
 	return &emptypb.Empty{}, nil
 }
 
-func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emptypb.Empty, error) {
+func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (_ *emptypb.Empty, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.Update")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	mask, err := fmask.MaskFromPaths(req.GetFieldMask().GetPaths(), mapUserFields)
 	if err != nil {
@@ -127,9 +130,10 @@ func (s UserServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*emp
 	return &emptypb.Empty{}, nil
 }
 
-func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (_ *pb.GetUserResponse, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.Get")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	query := filter.Filter{{
 		Attribute: "id",
@@ -153,9 +157,10 @@ func (s UserServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUse
 	}, nil
 }
 
-func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest) (*pb.GetUserSecretResponse, error) {
+func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest) (_ *pb.GetUserSecretResponse, err error) {
 	ctx, span := s.tracer.Start(ctx, "server.GetSecret")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	if s.config.VerifyClientCert {
 		if err := cert.VerifyClientTLS(ctx, "auth-service"); err != nil {
@@ -197,9 +202,10 @@ func (s UserServer) GetSecret(ctx context.Context, req *pb.GetUserSecretRequest)
 	}, nil
 }
 
-func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_GetStreamServer) error {
+func (s UserServer) GetStream(req *pb.GetUsersRequest, stream pb.UserService_GetStreamServer) (err error) {
 	ctx, span := s.tracer.Start(stream.Context(), "server.GetStream")
 	defer span.End()
+	defer tracing.SetSpanErr(span, err)
 
 	query, err := filter.Parse(req.GetFilter())
 	if err != nil {
