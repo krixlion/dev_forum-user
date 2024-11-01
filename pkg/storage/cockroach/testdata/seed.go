@@ -13,7 +13,9 @@ import (
 )
 
 func Seed() error {
-	env.Load("app")
+	if err := env.Load("app"); err != nil {
+		return err
+	}
 
 	port := os.Getenv("DB_PORT")
 	host := os.Getenv("DB_HOST")

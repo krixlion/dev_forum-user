@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/krixlion/dev_forum-lib/env"
+	"github.com/krixlion/dev_forum-lib/logging"
 	"github.com/krixlion/dev_forum-user/migrations"
 	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach"
 	"github.com/pressly/goose/v3"
@@ -13,7 +14,11 @@ import (
 )
 
 func main() {
-	env.Load("app")
+	if err := env.Load("app"); err != nil {
+		logging.Log("Failed to read env file", "err", err)
+		return
+	}
+
 	tracer := otel.Tracer("user-service")
 	_, span := tracer.Start(context.Background(), "Migrate")
 	defer span.End()

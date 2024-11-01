@@ -18,8 +18,10 @@ import (
 	"github.com/krixlion/dev_forum-user/pkg/storage/cockroach/testdata"
 )
 
-func setUpDB() CockroachDB {
-	env.Load("app")
+func setUpDB() (CockroachDB, error) {
+	if err := env.Load("app"); err != nil {
+		return CockroachDB{}, err
+	}
 
 	db_port := os.Getenv("DB_PORT")
 	db_host := os.Getenv("DB_HOST")
@@ -28,14 +30,14 @@ func setUpDB() CockroachDB {
 	db_name := os.Getenv("DB_NAME")
 	storage, err := Make(db_host, db_port, db_user, db_pass, db_name, nulls.NullTracer{})
 	if err != nil {
-		panic(err)
+		return CockroachDB{}, err
 	}
 
 	if err := testdata.Seed(); err != nil {
-		panic(err)
+		return CockroachDB{}, err
 	}
 
-	return storage
+	return storage, nil
 }
 
 func TestDB_Get(t *testing.T) {
@@ -63,7 +65,11 @@ func TestDB_Get(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer cancel()
 
-			db := setUpDB()
+			db, err := setUpDB()
+			if err != nil {
+				t.Errorf("CockroachDB.Get():\n error = %v\n", err)
+				return
+			}
 
 			got, err := db.Get(ctx, tt.filter)
 			if (err != nil) != tt.wantErr {
@@ -136,7 +142,11 @@ func TestDB_GetMultiple(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer cancel()
 
-			db := setUpDB()
+			db, err := setUpDB()
+			if err != nil {
+				t.Errorf("CockroachDB.GetMultiple():\n error = %v\n", err)
+				return
+			}
 
 			got, err := db.GetMultiple(ctx, tt.args.offset, tt.args.limit, tt.args.filter)
 			if (err != nil) != tt.wantErr {
@@ -179,7 +189,11 @@ func TestDB_Create(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer cancel()
 
-			db := setUpDB()
+			db, err := setUpDB()
+			if err != nil {
+				t.Errorf("CockroachDB.Create():\n error = %v\n", err)
+				return
+			}
 
 			if err := db.Create(ctx, tt.user); (err != nil) != tt.wantErr {
 				t.Errorf("CockroachDB.Create():\n error = %v\n wantErr = %v", err, tt.wantErr)
@@ -234,7 +248,11 @@ func TestDB_Update(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer cancel()
 
-			db := setUpDB()
+			db, err := setUpDB()
+			if err != nil {
+				t.Errorf("CockroachDB.Update():\n error = %v\n", err)
+				return
+			}
 
 			if err := db.Update(ctx, tt.user); (err != nil) != tt.wantErr {
 				t.Errorf("CockroachDB.Update():\n error = %v\n wantErr = %v", err, tt.wantErr)
@@ -285,7 +303,11 @@ func TestDB_Delete(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer cancel()
 
-			db := setUpDB()
+			db, err := setUpDB()
+			if err != nil {
+				t.Errorf("CockroachDB.Delete():\n error = %v\n", err)
+				return
+			}
 
 			if err := db.Delete(ctx, tt.id); (err != nil) != tt.wantErr {
 				t.Errorf("CockroachDB.Delete():\n error = %v\n wantErr = %v", err, tt.wantErr)
