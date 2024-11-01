@@ -9,8 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/krixlion/dev_forum-auth v0.0.0-20240803203340-bc377fce66a8
-	github.com/krixlion/dev_forum-lib v0.0.0-20240918152500-04c88648c5f0
-	github.com/krixlion/dev_forum-rabbitmq v0.0.0-20240728213819-3b74453e5c53
+	github.com/krixlion/dev_forum-lib v0.0.0-20241101143359-70fd1416b5bb
 	github.com/lib/pq v1.10.8
 	github.com/mennanov/fieldmask-utils v1.0.0
 	github.com/pressly/goose/v3 v3.10.0
