@@ -44,6 +44,8 @@ k8s-test-gen-coverage:
 
 k8s-run: k8s-stop
 	$(kubernetes) -k $(overlays-path)/${overlay} apply
+	$(kubernetes) wait --for=condition=ready pod -l aggregate=user
+	$(MAKE) k8s-db-migrate-up
 
 k8s-stop:
 	- $(kubernetes) -k $(overlays-path)/${overlay} delete 
