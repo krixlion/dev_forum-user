@@ -119,7 +119,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		return service.Dependencies{}, err
 	}
 
-	authConn, err := grpc.NewClient(os.Getenv("AUTH_SERVICE_SERVICE_HOST")+":"+os.Getenv("AUTH_SERVICE_SERVICE_PORT"),
+	authConn, err := grpc.NewClient(os.Getenv("AUTH_SERVICE_URL"),
 		grpc.WithTransportCredentials(clientCreds),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
