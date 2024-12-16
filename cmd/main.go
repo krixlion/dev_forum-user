@@ -15,7 +15,7 @@ import (
 	"github.com/krixlion/dev_forum-auth/pkg/grpc/auth"
 	authPb "github.com/krixlion/dev_forum-auth/pkg/grpc/v1"
 	"github.com/krixlion/dev_forum-auth/pkg/tokens"
-	"github.com/krixlion/dev_forum-auth/pkg/tokens/validator"
+	"github.com/krixlion/dev_forum-auth/pkg/tokens/parser"
 	"github.com/krixlion/dev_forum-lib/cert"
 	"github.com/krixlion/dev_forum-lib/env"
 	"github.com/krixlion/dev_forum-lib/event/broker"
@@ -129,12 +129,12 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	if err != nil {
 		return service.Dependencies{}, err
 	}
-	tokenValidator, err := validator.NewValidator(tokens.DefaultIssuer, validator.DefaultRefreshFunc(authPb.NewAuthServiceClient(authConn), tracer), validator.WithLogger(logger))
+	tokenParser, err := parser.NewParser(tokens.DefaultIssuer, parser.DefaultRefreshFunc(authPb.NewAuthServiceClient(authConn), tracer), parser.WithLogger(logger))
 	if err != nil {
 		return service.Dependencies{}, err
 	}
 
-	go tokenValidator.Run(ctx)
+	go tokenParser.Run(ctx)
 
 	mqConfig := rabbitmq.Config{
 		QueueSize:         100,
@@ -158,7 +158,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 	broker := broker.NewBroker(mq, logger, tracer)
 	dispatcher := dispatcher.NewDispatcher(20)
 
-	dispatcher.Register(tokenValidator)
+	dispatcher.Register(tokenParser)
 
 	userConfig := server.Config{
 		VerifyClientCert: isTLS,
@@ -177,7 +177,7 @@ func getServiceDependencies(ctx context.Context, serviceName string, isTLS bool)
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
-			selector.UnaryServerInterceptor(grpc_auth.UnaryServerInterceptor(auth.NewAuthFunc(tokenValidator, tracer)), userServer.AuthMatcher()),
+			selector.UnaryServerInterceptor(grpc_auth.UnaryServerInterceptor(auth.NewAuthFunc(tokenParser, tracer)), userServer.AuthMatcher()),
 			userServer.ValidateRequestInterceptor(),
 		),
 	)

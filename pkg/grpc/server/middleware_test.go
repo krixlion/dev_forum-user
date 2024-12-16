@@ -159,15 +159,9 @@ func TestUserServer_validateUpdate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test if validation fails on invalid email",
-			storage: func() storagemocks.Storage {
-				m := storagemocks.NewStorage()
-				return m
-			}(),
-			handler: func() mocks.UnaryHandler {
-				m := mocks.NewUnaryHandler()
-				return m
-			}(),
+			name:    "Test if validation fails on invalid email",
+			storage: storagemocks.NewStorage(),
+			handler: mocks.NewUnaryHandler(),
 			broker: func() mocks.Broker {
 				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()
@@ -183,15 +177,9 @@ func TestUserServer_validateUpdate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Test if validation fails on password shorter than 8 chars",
-			storage: func() storagemocks.Storage {
-				m := storagemocks.NewStorage()
-				return m
-			}(),
-			handler: func() mocks.UnaryHandler {
-				m := mocks.NewUnaryHandler()
-				return m
-			}(),
+			name:    "Test if validation fails on password shorter than 8 chars",
+			storage: storagemocks.NewStorage(),
+			handler: mocks.NewUnaryHandler(),
 			broker: func() mocks.Broker {
 				m := mocks.NewBroker()
 				m.On("ResilientPublish", mock.AnythingOfType("event.Event")).Return(nil).Once()

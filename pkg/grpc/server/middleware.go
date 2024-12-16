@@ -11,6 +11,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/selector"
+	"github.com/krixlion/dev_forum-auth/pkg/grpc/auth"
 	"github.com/krixlion/dev_forum-lib/filter"
 	"github.com/krixlion/dev_forum-lib/tracing"
 	pb "github.com/krixlion/dev_forum-user/pkg/grpc/v1"
@@ -103,8 +104,13 @@ func (s UserServer) validateUpdate(ctx context.Context, req *pb.UpdateUserReques
 		return nil, status.Error(codes.FailedPrecondition, "User not provided")
 	}
 
+	token, err := auth.GetTokenFromCtx(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Failed to parse the access token: %v", err)
+	}
+
 	// Sanitize user input.
-	user.Id = ""
+	user.Id = token.UserId
 	user.Name = html.EscapeString(user.GetName())
 	user.CreatedAt = timestamppb.New(time.Time{})
 	user.UpdatedAt = timestamppb.New(time.Now())
