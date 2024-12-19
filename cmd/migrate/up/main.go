@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 
@@ -38,7 +39,7 @@ func main() {
 		log.Fatalf("Failed to set dialect: %v", err)
 	}
 
-	if err := goose.Up(storage.Conn(), "."); err != nil {
+	if err := goose.Up(storage.Conn(), "."); err != nil && !errors.Is(err, goose.ErrAlreadyApplied) {
 		log.Fatalf("Failed to migrate: %v", err)
 	}
 }
